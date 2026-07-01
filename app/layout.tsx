@@ -22,6 +22,11 @@ const pressStart = Press_Start_2P({
 export const metadata: Metadata = {
   title: "STS Arcade Tracker",
   description: "Track your Google Skills Arcade points, badges, and leaderboard.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 import { AccountSwitcher, DashboardNavLink, SimulatorNavLink } from "@/components/AccountSwitcher";
