@@ -20,7 +20,7 @@ const pressStart = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "Arcade Tracker",
+  title: "STS Arcade Tracker",
   description: "Track your Google Skills Arcade points, badges, and leaderboard.",
 };
 
@@ -47,9 +47,13 @@ export default function RootLayout({
         <nav className="sticky top-0 z-50 glass border-b border-line/60">
           <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <span className="relative w-2.5 h-2.5 rounded-full bg-gradient-to-br from-cyan via-violet to-pink pulse-glow" />
+              <img
+                src="https://avatars.githubusercontent.com/u/117688092?v=4"
+                alt="STS Logo"
+                className="w-6 h-6 rounded-md object-contain border border-white/10 group-hover:scale-105 transition-transform"
+              />
               <span className="font-display font-semibold text-sm tracking-tight text-mist">
-                Arcade Tracker
+                STS Arcade Tracker
               </span>
             </Link>
             <div className="flex items-center gap-5 sm:gap-6 text-sm text-mist-muted">

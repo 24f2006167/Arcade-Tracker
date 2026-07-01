@@ -20,6 +20,7 @@ type ChartMode = "area" | "line" | "bar";
 // ─── Custom tooltip ──────────────────────────────────────────────────────────
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
+  const displayLabel = payload[0].payload?.fullDate || label;
   return (
     <div style={{
       background: "rgba(8,6,20,0.95)",
@@ -30,7 +31,7 @@ function CustomTooltip({ active, payload, label }: any) {
       boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(178,137,255,0.1)",
     }}>
       <p style={{ color: "#8e8aab", fontSize: 10, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        {label}
+        {displayLabel}
       </p>
       <p style={{ color: "#22e5e5", fontSize: 20, fontWeight: 700, margin: 0, lineHeight: 1 }}>
         {payload[0].value}
@@ -79,10 +80,27 @@ export function HistoryChart({ data }: { data: HistoryPoint[] }) {
 
   if (data.length < 2) return <EmptyChart />;
 
-  const chartData = data.map((d) => ({
-    date: new Date(d.fetched_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-    points: d.arcadePoints ?? d.total_points,
-  }));
+  const isAllSameDay = data.length > 0 && data.every((d) => {
+    const date1 = new Date(d.fetched_at).toDateString();
+    const date2 = new Date(data[0].fetched_at).toDateString();
+    return date1 === date2;
+  });
+
+  const chartData = data.map((d) => {
+    const dateObj = new Date(d.fetched_at);
+    return {
+      date: isAllSameDay
+        ? dateObj.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+        : dateObj.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      points: d.arcadePoints ?? d.total_points,
+      fullDate: dateObj.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+    };
+  });
 
   const maxPts    = Math.max(...chartData.map((d) => d.points));
   const minPts    = Math.min(...chartData.map((d) => d.points));
