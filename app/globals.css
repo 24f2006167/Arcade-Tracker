@@ -154,3 +154,87 @@ body {
 .rise-in {
   animation: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
+
+/* ─── Hero stagger entrance ─────────────────────────────────────────────── */
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-enter {
+  animation: hero-enter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* ─── Cursor spotlight ───────────────────────────────────────────────────── */
+.cursor-spotlight {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* ─── Feature glass cards ────────────────────────────────────────────────── */
+.feat-card {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+.feat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--color-cyan), var(--color-violet), var(--color-pink));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.feat-card:hover::before { opacity: 1; }
+.feat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 32px -4px rgba(34,229,229,0.18), 0 0 64px -8px rgba(179,137,255,0.14);
+  border-color: transparent;
+}
+
+/* ─── CTA button pulse glow ──────────────────────────────────────────────── */
+@keyframes btn-glow {
+  0%, 100% { box-shadow: 0 0 16px 0 rgba(34,229,229,0.25), 0 0 32px 0 rgba(255,111,179,0.15); }
+  50%       { box-shadow: 0 0 22px 2px rgba(34,229,229,0.38), 0 0 44px 4px rgba(255,111,179,0.24); }
+}
+.cta-btn {
+  animation: btn-glow 3s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cta-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 28px 4px rgba(34,229,229,0.45), 0 0 56px 8px rgba(255,111,179,0.32) !important;
+}
+.cta-btn:active { transform: scale(0.98); }
+
+/* ─── Input glow ring ────────────────────────────────────────────────────── */
+.url-input-wrap {
+  transition: box-shadow 0.2s ease;
+}
+.url-input-wrap:focus-within {
+  box-shadow: 0 0 0 2px rgba(34,229,229,0.4), 0 0 20px 0 rgba(179,137,255,0.2);
+}
+
+/* ─── Reduced motion overrides ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none !important; }
+  .hero-enter  { animation: none !important; opacity: 1; transform: none; }
+  .cursor-spotlight { display: none !important; }
+  .pulse-glow  { animation: none !important; }
+  .cta-btn     { animation: none !important; }
+}
