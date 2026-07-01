@@ -9,6 +9,7 @@ import { BadgeGrid } from "@/components/BadgeGrid";
 import { IncompleteBadges } from "@/components/IncompleteBadges";
 import { HistoryChart } from "@/components/HistoryChart";
 import { SeasonCountdown } from "@/components/SeasonCountdown";
+import { PointsSimulator } from "@/components/PointsSimulator";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
 import { SEASON } from "@/lib/arcade";
 import type { ArcadeResult } from "@/lib/arcadeCalculator";
@@ -438,6 +439,12 @@ export default function DashboardPage() {
               </a>
             </div>
           </div>
+
+          {/* Interactive Points Simulator */}
+          <PointsSimulator
+            currentArcade={arcade}
+            initialBonusMilestone={bonusMilestoneAnnounced && !!data.bonusMilestone?.completed}
+          />
         </div>
       </div>
 
