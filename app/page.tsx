@@ -317,15 +317,15 @@ export default function Home() {
             <CodeRain reduced={reduced} />
 
             {/* 2. R3F canvas (ambient 3D objects target) */}
-            <div className="hero-canvas-wrap">
+            <div className="hero-canvas-wrap" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
               <HeroScene mouseRef={mouseRef} />
             </div>
 
             {/* 3. HUD Scanlines overlay */}
-            <div className="hud-scanlines" />
+            <div className="hud-scanlines" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
 
             {/* 4. CRT Vignette overlay */}
-            <div className="hud-vignette" />
+            <div className="hud-vignette" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
 
             {/* 5. Title/visual elements (fading/scaling on scroll) */}
             <motion.div 
