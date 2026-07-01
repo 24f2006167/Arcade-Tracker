@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   description: "Track your Google Skills Arcade points, badges, and leaderboard.",
 };
 
-import { AccountSwitcher, DashboardNavLink } from "@/components/AccountSwitcher";
+import { AccountSwitcher, DashboardNavLink, SimulatorNavLink } from "@/components/AccountSwitcher";
 
 export default function RootLayout({
   children,
@@ -57,6 +57,7 @@ export default function RootLayout({
                 Add profile
               </Link>
               <DashboardNavLink />
+              <SimulatorNavLink />
               <Link href="/leaderboard" className="hover:text-pink transition-colors">
                 Leaderboard
               </Link>

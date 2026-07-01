@@ -220,3 +220,28 @@ export function DashboardNavLink() {
     </Link>
   );
 }
+
+export function SimulatorNavLink() {
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const params = useParams<{ id: string }>();
+
+  const updateProfileId = () => {
+    if (typeof window === "undefined") return;
+    const last = localStorage.getItem("last_profile_id");
+    setProfileId(last || params?.id || null);
+  };
+
+  useEffect(() => {
+    updateProfileId();
+    window.addEventListener("storage", updateProfileId);
+    return () => window.removeEventListener("storage", updateProfileId);
+  }, [params?.id]);
+
+  if (!profileId) return null;
+
+  return (
+    <Link href={`/dashboard/${profileId}/simulator`} className="hover:text-cyan transition-colors">
+      Calculator
+    </Link>
+  );
+}
