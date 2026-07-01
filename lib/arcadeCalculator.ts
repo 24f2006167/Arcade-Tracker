@@ -549,7 +549,8 @@ export function computeSwagEligibility(
  */
 export function calculateArcadeResult(
   badges: RawBadge[],
-  config: SeasonConfig = ACTIVE_SEASON_CONFIG
+  config: SeasonConfig = ACTIVE_SEASON_CONFIG,
+  bonusMilestoneCompleted?: boolean
 ): ArcadeResult {
   const classifiedBadges = classifyBadges(badges, config);
   const breakdown = computeBreakdown(classifiedBadges);
@@ -570,11 +571,18 @@ export function calculateArcadeResult(
   const milestones = computeMilestones(facilitatorBreakdown, config);
   const workMeetsPlay = computeWorkMeetsPlay(breakdown, config);
 
-  const milestoneBonus = milestones
-    .filter((m) => m.achieved)
-    .reduce((sum, m) => sum + m.bonusPoints, 0);
+  const achievedMilestones = milestones.filter((m) => m.achieved);
+  const milestoneBonus = achievedMilestones.length > 0
+    ? Math.max(...achievedMilestones.map((m) => m.bonusPoints))
+    : 0;
 
-  const bonusPoints = milestoneBonus + workMeetsPlay.bonusPoints;
+  // Bonus milestone points (10 pts) - only active if they completed it AND achieved at least Milestone 1
+  const isBonusMilestoneEligible = achievedMilestones.length > 0;
+  const hasCertification = classifiedBadges.some(b => b.category === "certification");
+  const isBonusMilestoneCompleted = bonusMilestoneCompleted ?? hasCertification;
+  const bonusMilestonePoints = (isBonusMilestoneEligible && isBonusMilestoneCompleted) ? 10 : 0;
+
+  const bonusPoints = milestoneBonus + bonusMilestonePoints + workMeetsPlay.bonusPoints;
 
   const totalArcadePoints = Math.round((basePoints + bonusPoints) * 100) / 100;
 

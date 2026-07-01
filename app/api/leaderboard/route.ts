@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
+import { fetchBonusMilestoneInfo } from "@/lib/scraper";
 import type { Badge } from "@/lib/scraper";
 
 export async function GET() {
@@ -10,6 +11,10 @@ export async function GET() {
     const { data: profiles, error } = await db.from("profiles").select("id, public_id, display_name");
     if (error) throw error;
     if (!profiles?.length) return NextResponse.json({ leaderboard: [] });
+
+    const bonusMilestone = await fetchBonusMilestoneInfo([]);
+    const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
+    const descLower = bonusMilestone.description.toLowerCase();
 
     const rows = await Promise.all(
       profiles.map(async (p) => {
@@ -21,7 +26,21 @@ export async function GET() {
           .limit(1)
           .maybeSingle();
 
-        const arcade = calculateArcadeResult((latest?.badges as Badge[]) ?? []);
+        let isCompleted = false;
+        const badges = (latest?.badges as Badge[]) ?? [];
+        for (const b of badges) {
+          const titleLower = b.title.toLowerCase();
+          if (
+            titleLower.includes("certification") ||
+            titleLower.includes("certified") ||
+            (bonusMilestoneAnnounced && descLower.length > 50 && titleLower.length > 5 && descLower.includes(titleLower))
+          ) {
+            isCompleted = true;
+            break;
+          }
+        }
+
+        const arcade = calculateArcadeResult(badges, undefined, bonusMilestoneAnnounced && isCompleted);
 
         return {
           profileId: p.id,

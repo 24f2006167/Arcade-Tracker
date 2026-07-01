@@ -82,9 +82,7 @@ export default function DashboardPage() {
       } catch (_) {}
 
       const profile = data.profile;
-      const bonusMilestoneAnnounced = !!(data.bonusMilestone?.description && data.bonusMilestone.description.length > 100 && !data.bonusMilestone.description.includes("will be posted here soon"));
-      const autoBonusPoints = (bonusMilestoneAnnounced && data.bonusMilestone?.completed) ? 10 : 0;
-      const finalPoints = data.arcadeResult.totalArcadePoints + autoBonusPoints;
+      const finalPoints = data.arcadeResult.totalArcadePoints;
 
       list = list.filter((p: any) => p.id !== profile.id);
       list.push({
@@ -133,14 +131,8 @@ export default function DashboardPage() {
   const arcade = data.arcadeResult;
   const badges = latest?.badges ?? [];
 
-  // Bonus milestone (+10 pts): Only add if the task is officially announced AND completed.
-  // As of now the bonus milestone task details are "not yet announced" on the official page,
-  // so we do NOT auto-add these 10 pts until the task is publicly defined.
-  const bonusMilestoneAnnounced = !!(data.bonusMilestone?.description && data.bonusMilestone.description.length > 100 && !data.bonusMilestone.description.includes("will be posted here soon"));
-  const autoBonusPoints = (bonusMilestoneAnnounced && data.bonusMilestone?.completed) ? 10 : 0;
-
-  // Total arcade points (bonus milestone not included until announced)
-  const points = arcade.totalArcadePoints + autoBonusPoints;
+  // Total arcade points (includes milestone bonuses and bonus milestone if eligible/completed)
+  const points = arcade.totalArcadePoints;
 
   const tiersConfig = [
     { name: "Arcade Trooper", points: 50 },

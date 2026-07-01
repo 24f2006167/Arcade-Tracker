@@ -33,9 +33,7 @@ export default function Home() {
           list = stored ? JSON.parse(stored) : [];
         } catch (_) {}
 
-        const bonusMilestoneAnnounced = !!(data.bonusMilestone?.description && data.bonusMilestone.description.length > 100 && !data.bonusMilestone.description.includes("will be posted here soon"));
-        const autoBonusPoints = (bonusMilestoneAnnounced && data.bonusMilestone?.completed) ? 10 : 0;
-        const finalPoints = (data.arcadeResult?.totalArcadePoints ?? 0) + autoBonusPoints;
+        const finalPoints = data.arcadeResult?.totalArcadePoints ?? 0;
 
         list = list.filter((p: any) => p.id !== data.profileId);
         list.push({

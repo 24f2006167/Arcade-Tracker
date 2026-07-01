@@ -31,8 +31,10 @@ export async function POST(req: NextRequest) {
 
     await db.from("profiles").update({ display_name: fresh.name }).eq("id", profileId);
 
-    const arcadeResult = calculateArcadeResult(fresh.badges);
     const bonusMilestone = await fetchBonusMilestoneInfo(fresh.badges);
+    const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
+    const isBonusMilestoneCompleted = bonusMilestoneAnnounced && bonusMilestone.completed;
+    const arcadeResult = calculateArcadeResult(fresh.badges, undefined, isBonusMilestoneCompleted);
 
     return NextResponse.json({ success: true, ...fresh, arcadeResult, bonusMilestone });
   } catch (err) {

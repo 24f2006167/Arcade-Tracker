@@ -60,11 +60,15 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
   // In our simulation, we just carry over current actual WMP bonus status for simplicity.
   const wmpPoints = currentArcade.workMeetsPlay.bonusPoints;
 
+  // Bonus milestone: Only eligible if they reached at least Milestone 1 (+5 pts)
+  const isEligibleForBonusMilestone = simMilestonePoints > 0;
+  const simBonusMilestonePoints = (simBonusMilestone && isEligibleForBonusMilestone) ? 10 : 0;
+
   const totalSimulatedPoints =
     simulatedBasePoints +
     simMilestonePoints +
     wmpPoints +
-    (simBonusMilestone ? 10 : 0);
+    simBonusMilestonePoints;
 
   // Determine tier based on simulated points
   let simulatedTier = "Unranked";
@@ -190,16 +194,19 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
 
       {/* Checkboxes and Milestones */}
       <div className="space-y-3">
-        <label className="flex items-center justify-between glass bg-white/[0.02] border border-white/5 rounded-2xl p-3 cursor-pointer hover:bg-white/[0.04] transition-all">
+        <label className={`flex items-center justify-between glass bg-white/[0.02] border border-white/5 rounded-2xl p-3 cursor-pointer hover:bg-white/[0.04] transition-all ${!isEligibleForBonusMilestone ? "opacity-50 cursor-not-allowed" : ""}`}>
           <div>
             <p className="text-xs font-semibold text-mist">Facilitator Bonus Milestone</p>
-            <p className="text-[9px] text-mist-muted mt-0.5">+10 Bonus Points</p>
+            <p className="text-[9px] text-mist-muted mt-0.5">
+              {!isEligibleForBonusMilestone ? "Requires Milestone 1 completion" : "+10 Bonus Points"}
+            </p>
           </div>
           <input
             type="checkbox"
             checked={simBonusMilestone}
+            disabled={!isEligibleForBonusMilestone}
             onChange={(e) => setSimBonusMilestone(e.target.checked)}
-            className="w-4 h-4 accent-cyan cursor-pointer"
+            className="w-4 h-4 accent-cyan cursor-pointer disabled:cursor-not-allowed"
           />
         </label>
 
