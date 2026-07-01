@@ -53,7 +53,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ profileId, ...data, arcadeResult, bonusMilestone });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Profile API Error:", err);
+    const message = err instanceof Error
+      ? err.message
+      : (err && typeof err === "object" && "message" in err)
+      ? String((err as any).message)
+      : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

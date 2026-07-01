@@ -36,7 +36,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, ...fresh, arcadeResult, bonusMilestone });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Refresh API Error:", err);
+    const message = err instanceof Error
+      ? err.message
+      : (err && typeof err === "object" && "message" in err)
+      ? String((err as any).message)
+      : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
