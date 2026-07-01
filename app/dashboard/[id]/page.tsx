@@ -82,7 +82,9 @@ export default function DashboardPage() {
       } catch (_) {}
 
       const profile = data.profile;
-      const finalPoints = data.arcadeResult.totalArcadePoints + (data.bonusMilestone?.completed ? 10 : 0);
+      const bonusMilestoneAnnounced = !!(data.bonusMilestone?.description && data.bonusMilestone.description.length > 100 && !data.bonusMilestone.description.includes("will be posted here soon"));
+      const autoBonusPoints = (bonusMilestoneAnnounced && data.bonusMilestone?.completed) ? 10 : 0;
+      const finalPoints = data.arcadeResult.totalArcadePoints + autoBonusPoints;
 
       list = list.filter((p: any) => p.id !== profile.id);
       list.push({

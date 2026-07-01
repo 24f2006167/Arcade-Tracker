@@ -32,11 +32,16 @@ export default function Home() {
         try {
           list = stored ? JSON.parse(stored) : [];
         } catch (_) {}
+
+        const bonusMilestoneAnnounced = !!(data.bonusMilestone?.description && data.bonusMilestone.description.length > 100 && !data.bonusMilestone.description.includes("will be posted here soon"));
+        const autoBonusPoints = (bonusMilestoneAnnounced && data.bonusMilestone?.completed) ? 10 : 0;
+        const finalPoints = (data.arcadeResult?.totalArcadePoints ?? 0) + autoBonusPoints;
+
         list = list.filter((p: any) => p.id !== data.profileId);
         list.push({
           id: data.profileId,
           name: data.name,
-          points: data.arcadeResult?.totalArcadePoints ?? data.totalPoints ?? 0,
+          points: finalPoints,
         });
         localStorage.setItem("arcade_profiles", JSON.stringify(list));
         localStorage.setItem("last_profile_id", data.profileId);

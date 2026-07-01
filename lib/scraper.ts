@@ -190,8 +190,22 @@ export async function fetchPublicProfile(publicId: string): Promise<ProfileData>
     );
   }
 
+  // Detect redirects to landing pages (which indicates the profile doesn't exist or is private)
+  if (res.url && !res.url.toLowerCase().includes(publicId.toLowerCase())) {
+    throw new Error(
+      "Profile is private or does not exist. Please check the public ID/URL and ensure visibility is set to public."
+    );
+  }
+
   const html = await res.text();
   const { name, totalPoints, badgeEntries } = parseProfileHtml(html, publicId);
+
+  const lowerName = name.toLowerCase();
+  if (lowerName === "google skills" || lowerName === "google cloud skills boost" || lowerName === "skills") {
+    throw new Error(
+      "Profile is private or does not exist. Please check the public ID/URL and ensure visibility is set to public."
+    );
+  }
 
   if (badgeEntries.length === 0) {
     // Safety fallback — profile was fetched but no badges found (could be private or empty)

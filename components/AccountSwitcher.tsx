@@ -24,7 +24,15 @@ export function AccountSwitcher() {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem("arcade_profiles");
     try {
-      const list: StoredProfile[] = stored ? JSON.parse(stored) : [];
+      let list: StoredProfile[] = stored ? JSON.parse(stored) : [];
+      
+      // Auto clean-up of legacy invalid "Google Skills" entries
+      const cleaned = list.filter((p) => p.name !== "Google Skills" && p.name !== "Google Cloud Skills Boost");
+      if (cleaned.length !== list.length) {
+        localStorage.setItem("arcade_profiles", JSON.stringify(cleaned));
+        list = cleaned;
+      }
+
       setProfiles(list);
 
       // Set active profile based on URL parameter id
@@ -119,7 +127,7 @@ export function AccountSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-2xl glass-strong border border-white/10 shadow-2xl p-4 space-y-3.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0c0a1a] border border-white/10 shadow-2xl p-4 space-y-3.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
           {activeProfile && (
             <div className="space-y-1 pb-2 border-b border-white/5">
               <p className="text-[10px] text-mist-muted font-medium uppercase tracking-wider">Active Account</p>
