@@ -15,6 +15,7 @@ import {
   AnimatePresence,
   useInView,
 } from "framer-motion";
+import CodeRain from "@/components/hero/CodeRain";
 
 // ─── Lazy-load the R3F canvas (ssr:false — never runs on the server) ──────────
 const HeroScene = dynamic(() => import("@/components/hero/HeroScene"), {
@@ -99,32 +100,6 @@ function FeatureCard({
   );
 }
 
-// ─── Scroll-linked hero opacity/scale wrapper ─────────────────────────────────
-function HeroScrollLayer({
-  containerRef,
-  children,
-}: {
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  children: React.ReactNode;
-}) {
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  // Hero fades + scales down as user scrolls 0% → 60%
-  const rawOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
-  const rawScale   = useTransform(scrollYProgress, [0, 0.55], [1, 0.88]);
-  const opacity = useSpring(rawOpacity, { stiffness: 120, damping: 28, mass: 0.6 });
-  const scale   = useSpring(rawScale,   { stiffness: 120, damping: 28, mass: 0.6 });
-
-  return (
-    <motion.div style={{ opacity, scale }} className="will-change-transform">
-      {children}
-    </motion.div>
-  );
-}
-
 // ─── Animated content section item ───────────────────────────────────────────
 function RevealItem({
   children,
@@ -187,20 +162,6 @@ function CursorSpotlight() {
   return <div ref={divRef} aria-hidden className="cursor-spotlight" />;
 }
 
-// ─── Static gradient fallback (for prefers-reduced-motion) ────────────────────
-function StaticHeroFallback() {
-  return (
-    <div
-      className="w-full h-full flex items-center justify-center"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(34,229,229,0.12) 0%, rgba(179,137,255,0.10) 40%, transparent 80%)",
-      }}
-      aria-hidden
-    />
-  );
-}
-
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [input, setInput]   = useState("");
@@ -224,7 +185,29 @@ export default function Home() {
   }, [reduced]);
 
   // Scroll container — useScroll targets this ref
-  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  const springConfig = { stiffness: 100, damping: 25, mass: 0.5 };
+  
+  // Hero opacity and scale transforms
+  const heroOpacityRaw = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  const heroScaleRaw = useTransform(scrollYProgress, [0, 0.75], [1, 0.85]);
+  const heroYRaw = useTransform(scrollYProgress, [0, 0.75], [0, -50]);
+  
+  const heroOpacity = useSpring(heroOpacityRaw, springConfig);
+  const heroScale = useSpring(heroScaleRaw, springConfig);
+  const heroY = useSpring(heroYRaw, springConfig);
+
+  // Content (Stage 2) transforms
+  const contentOpacityRaw = useTransform(scrollYProgress, [0.35, 0.95], [0, 1]);
+  const contentYRaw = useTransform(scrollYProgress, [0.35, 0.95], [120, 0]);
+  
+  const contentOpacity = useSpring(contentOpacityRaw, springConfig);
+  const contentY = useSpring(contentYRaw, springConfig);
 
   // ─── Profile submit ───────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
@@ -324,32 +307,34 @@ export default function Home() {
     <>
       <CursorSpotlight />
 
-      {/*
-        Outer container: 200vh tall so the sticky hero occupies the first
-        viewport and the content section peeks up below.
-      */}
-      <div ref={containerRef} style={{ minHeight: "200vh" }}>
+      <div className="relative w-full">
+        {/* ── STAGE 1: Spacer + Sticky 3D hero ── */}
+        <div ref={heroRef} className="relative w-full h-[100vh] md:h-[100dvh]">
+          <div className="sticky top-0 left-0 w-full h-[100vh] md:h-[100dvh] overflow-hidden z-0 bg-void">
+            {/* Cyber HUD elements layering: */}
+            
+            {/* 1. Code Rain canvas (ambient texture background) */}
+            <CodeRain reduced={reduced} />
 
-        {/* ── STAGE 1: Sticky 3D hero ────────────────────────────────────── */}
-        <div className="hero-canvas-wrap">
-          <HeroScrollLayer containerRef={containerRef}>
-            {/* Dark canvas background */}
-            <div
-              className="absolute inset-0"
-              style={{ background: "rgba(5,6,15,0.55)" }}
-              aria-hidden
-            />
-
-            {/* R3F canvas — full viewport */}
-            <div className="absolute inset-0">
+            {/* 2. R3F canvas (ambient 3D objects target) */}
+            <div className="hero-canvas-wrap">
               <HeroScene mouseRef={mouseRef} />
             </div>
 
-            {/* Hero title overlay — centred on the canvas */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6 pointer-events-none select-none">
+            {/* 3. HUD Scanlines overlay */}
+            <div className="hud-scanlines" />
+
+            {/* 4. CRT Vignette overlay */}
+            <div className="hud-vignette" />
+
+            {/* 5. Title/visual elements (fading/scaling on scroll) */}
+            <motion.div 
+              style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6 pointer-events-none select-none z-10 will-change-transform"
+            >
               {/* Eyebrow */}
               <motion.span
-                className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted pointer-events-none"
+                className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, ease: EASE, delay: 0.3 }}
@@ -358,9 +343,9 @@ export default function Home() {
                 Public profile tracking, reinvented
               </motion.span>
 
-              {/* H1 */}
+              {/* Headline */}
               <motion.h1
-                className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.04] tracking-tight text-mist text-center max-w-3xl"
+                className="glitch-text font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.04] tracking-tight text-mist text-center max-w-3xl"
                 initial={{ opacity: 0, y: 22 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
@@ -379,35 +364,28 @@ export default function Home() {
               >
                 Scroll down to get started.
               </motion.p>
-            </div>
+            </motion.div>
 
             {/* Scroll cue */}
-            <div
-              className="scroll-cue-wrap absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none"
+            <motion.div
+              style={{ opacity: heroOpacity }}
+              className="scroll-cue-wrap absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-10"
               aria-label="Scroll to continue"
             >
               <span className="text-[10px] uppercase tracking-widest text-mist-muted/60">
                 scroll
               </span>
               <ChevronDown className="scroll-cue w-5 h-5 text-mist-muted/70" />
-            </div>
-          </HeroScrollLayer>
+            </motion.div>
+          </div>
         </div>
 
-        {/* ── STAGE 2: Functional UI ──────────────────────────────────────── */}
-        {/*
-          Positioned at natural document flow below the hero.
-          margin-top: 100vh pushes it below the full sticky hero so the
-          user must scroll to reveal it.
-        */}
-        <div
-          style={{ marginTop: "-100vh" }}
-          className="relative z-10 pointer-events-none"
-          aria-hidden
-        />
-        <div className="relative z-10 flex flex-col items-center text-center gap-12 px-4 py-20 pb-24">
-
-          {/* Eyebrow (scroll-triggered) */}
+        {/* ── STAGE 2: Functional UI ── */}
+        <motion.div 
+          style={{ opacity: contentOpacity, y: contentY }}
+          className="relative z-10 flex flex-col items-center text-center gap-12 px-4 py-20 pb-24 bg-void border-t border-line/20 will-change-transform"
+        >
+          {/* Eyebrow */}
           <RevealItem delay={0} reduced={reduced} className="w-full flex justify-center">
             <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted">
               <Sparkles className="w-3.5 h-3.5 text-violet" />
@@ -493,7 +471,7 @@ export default function Home() {
               enabled in Skills Boost account settings for this to work.
             </p>
           </RevealItem>
-        </div>
+        </motion.div>
       </div>
     </>
   );
