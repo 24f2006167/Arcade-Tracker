@@ -57,40 +57,15 @@ function classifyBadge(title: string): Badge["type"] {
 }
 
 /**
- * Fetch a single badge detail page and extract the badge title from og:title.
- * Falls back to <title> tag. Returns null if both fail.
- */
-async function fetchBadgeTitle(
-  badgeUrl: string
-): Promise<string | null> {
-  try {
-    const res = await fetch(badgeUrl, {
-      headers: FETCH_HEADERS,
-      next: { revalidate: 0 },
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    const ogTitle = $('meta[property="og:title"]').attr("content");
-    if (ogTitle && ogTitle.trim()) return ogTitle.trim();
-    const titleTag = $("title").text();
-    if (titleTag) return titleTag.replace(/\s*\|.*$/, "").trim();
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Phase 1: Parse the public profile HTML to extract:
+ * Parse the public profile HTML to extract:
  *   - display name
  *   - total skills points (shown as "N points" in bold)
- *   - list of { badgeUrl, earnedDate, imageUrl } for each badge
+ *   - list of badges directly with their titles, images, and dates.
  */
 function parseProfileHtml(html: string, publicId: string): {
   name: string;
   totalPoints: number;
-  badgeEntries: { badgeUrl: string; earnedDate: string; imageUrl: string }[];
+  badges: Badge[];
 } {
   const $ = cheerio.load(html);
 
@@ -109,10 +84,7 @@ function parseProfileHtml(html: string, publicId: string): {
   const pointsMatch = pointsText.match(/(\d+)/);
   const totalPoints = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
 
-  // Badge entries — each .profile-badge has:
-  //   <a class="badge-image" href="/public_profiles/.../badges/{id}"><img src="..."/></a>
-  //   <span class='ql-title-medium l-mts'>Earned Jun 13, 2026 EDT</span>
-  const badgeEntries: { badgeUrl: string; earnedDate: string; imageUrl: string }[] = [];
+  const badges: Badge[] = [];
 
   $(".profile-badge").each((_, el) => {
     const anchor = $(el).find("a.badge-image");
@@ -121,61 +93,36 @@ function parseProfileHtml(html: string, publicId: string): {
       ? href
       : `https://www.skills.google${href}`;
     const imageUrl = anchor.find("img").attr("src") ?? "";
-    const earnedText = $(el).find(".ql-title-medium").text().trim();
-    // "Earned Jun 13, 2026 EDT" → "Jun 13, 2026"
+    
+    // Real title is in .ql-title-medium
+    const title = $(el).find(".ql-title-medium").text().trim();
+    
+    // Earned date is in .ql-body-medium
+    const earnedText = $(el).find(".ql-body-medium").text().trim();
     const dateMatch = earnedText.match(/Earned\s+([A-Za-z]+\s+\d+,\s+\d{4})/);
     const earnedDate = dateMatch ? dateMatch[1] : "";
 
-    if (badgeUrl && badgeUrl.includes("/badges/")) {
-      badgeEntries.push({ badgeUrl, earnedDate, imageUrl });
-    }
-  });
-
-  return { name, totalPoints, badgeEntries };
-}
-
-/**
- * Phase 2: Concurrently fetch every badge's detail page and resolve its title.
- * Batched in groups of 10 to avoid hammering the server.
- */
-async function resolveBadgeTitles(
-  badgeEntries: { badgeUrl: string; earnedDate: string; imageUrl: string }[]
-): Promise<Badge[]> {
-  const BATCH_SIZE = 10;
-  const badges: Badge[] = [];
-
-  for (let i = 0; i < badgeEntries.length; i += BATCH_SIZE) {
-    const batch = badgeEntries.slice(i, i + BATCH_SIZE);
-    const titles = await Promise.all(
-      batch.map((entry) => fetchBadgeTitle(entry.badgeUrl))
-    );
-    for (let j = 0; j < batch.length; j++) {
-      const entry = batch[j];
-      const title = titles[j] ?? `Badge ${entry.badgeUrl.split("/").pop()}`;
+    if (title && badgeUrl && badgeUrl.includes("/badges/")) {
       badges.push({
         title,
         type: classifyBadge(title),
-        earnedDate: entry.earnedDate || undefined,
-        imageUrl: entry.imageUrl || undefined,
-        pageUrl: entry.badgeUrl,
+        earnedDate: earnedDate || undefined,
+        imageUrl: imageUrl || undefined,
+        pageUrl: badgeUrl,
       });
     }
-  }
+  });
 
-  return badges;
+  return { name, totalPoints, badges };
 }
 
 /**
  * Main entry point.
  *
- * Two-phase scrape:
- *  1. Fetch the public profile page → extract name, points, badge URLs + dates.
- *  2. Concurrently fetch each individual badge page → get the real title from og:title.
- *
- * This reliably captures the exact badge title regardless of how Google
- * names the current season's games — no keyword guessing required here.
- * Classification (arcade vs. skill vs. trivia, etc.) is handled separately
- * by arcadeCalculator.ts using the explicit season registry.
+ * Fast single-phase scrape:
+ *  1. Fetch the public profile page → extract name, points, and all badges directly from the document HTML.
+ *  This avoids making concurrent network requests for each individual badge,
+ *  drastically improving performance and avoiding function timeouts in serverless environments.
  */
 export async function fetchPublicProfile(publicId: string): Promise<ProfileData> {
   const profileUrl = `${PROFILE_BASE}${publicId}`;
@@ -198,7 +145,7 @@ export async function fetchPublicProfile(publicId: string): Promise<ProfileData>
   }
 
   const html = await res.text();
-  const { name, totalPoints, badgeEntries } = parseProfileHtml(html, publicId);
+  const { name, totalPoints, badges } = parseProfileHtml(html, publicId);
 
   const lowerName = name.toLowerCase();
   if (lowerName === "google skills" || lowerName === "google cloud skills boost" || lowerName === "skills") {
@@ -206,20 +153,6 @@ export async function fetchPublicProfile(publicId: string): Promise<ProfileData>
       "Profile is private or does not exist. Please check the public ID/URL and ensure visibility is set to public."
     );
   }
-
-  if (badgeEntries.length === 0) {
-    // Safety fallback — profile was fetched but no badges found (could be private or empty)
-    return {
-      name,
-      publicId,
-      totalPoints,
-      totalBadges: 0,
-      badges: [],
-    };
-  }
-
-  // Phase 2: resolve titles from individual badge pages in parallel
-  const badges = await resolveBadgeTitles(badgeEntries);
 
   return {
     name,
