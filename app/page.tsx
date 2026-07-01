@@ -1,100 +1,38 @@
 "use client";
 
 import {
-  useState, useEffect, useRef, useCallback,
+  useState, useRef, useEffect, useCallback,
 } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Sparkles, Trophy, Zap, RotateCw } from "lucide-react";
+import { ArrowRight, Sparkles, Trophy, Zap, RotateCw, ChevronDown } from "lucide-react";
 import {
   motion,
+  useScroll,
+  useTransform,
+  useSpring,
   useReducedMotion,
   AnimatePresence,
+  useInView,
 } from "framer-motion";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Cursor spotlight — pure rAF, no React re-renders
-// ─────────────────────────────────────────────────────────────────────────────
-function CursorSpotlight() {
-  const divRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
-  const posRef = useRef({ x: -1000, y: -1000 });
+// ─── Lazy-load the R3F canvas (ssr:false — never runs on the server) ──────────
+const HeroScene = dynamic(() => import("@/components/hero/HeroScene"), {
+  ssr: false,
+  loading: () => null,
+});
 
-  const paint = useCallback(() => {
-    const el = divRef.current;
-    if (!el) return;
-    const { x, y } = posRef.current;
-    el.style.background = `radial-gradient(650px circle at ${x}px ${y}px,
-      rgba(34,229,229,0.07) 0%,
-      rgba(179,137,255,0.05) 35%,
-      transparent 70%)`;
-  }, []);
-
-  useEffect(() => {
-    // Skip on touch devices
-    if (window.matchMedia("(hover: none)").matches) return;
-
-    const onMove = (e: MouseEvent) => {
-      posRef.current = { x: e.clientX, y: e.clientY };
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(paint);
-    };
-
-    window.addEventListener("mousemove", onMove, { passive: true });
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [paint]);
-
-  return (
-    <div
-      ref={divRef}
-      aria-hidden
-      className="cursor-spotlight"
-    />
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Animation config
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Animation constants ──────────────────────────────────────────────────────
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const containerVariants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.05,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: EASE },
-  },
-};
-
-// reduced-motion: instant reveal
-const itemVariantsReduced = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0 } },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Feature card data
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Feature card data ────────────────────────────────────────────────────────
 const FEATURES = [
   {
     icon: Trophy,
     label: "Live points & badges",
     desc: "Real-time Arcade Points pulled directly from your public Skills Boost profile.",
     color: "text-amber",
-    glowColor: "rgba(255,194,75,0.18)",
+    glowColor: "rgba(255,194,75,0.20)",
     iconBg: "rgba(255,194,75,0.12)",
     id: "feat-live-points",
   },
@@ -103,8 +41,8 @@ const FEATURES = [
     label: "History trend charts",
     desc: "Snapshot-over-time charts so you can see growth and momentum at a glance.",
     color: "text-cyan",
-    glowColor: "rgba(34,229,229,0.18)",
-    iconBg: "rgba(34,229,229,0.1)",
+    glowColor: "rgba(34,229,229,0.20)",
+    iconBg: "rgba(34,229,229,0.10)",
     id: "feat-history",
   },
   {
@@ -112,29 +50,31 @@ const FEATURES = [
     label: "Global leaderboard",
     desc: "Compare your rank across every tracked profile in the STS community.",
     color: "text-pink",
-    glowColor: "rgba(255,111,179,0.18)",
-    iconBg: "rgba(255,111,179,0.1)",
+    glowColor: "rgba(255,111,179,0.20)",
+    iconBg: "rgba(255,111,179,0.10)",
     id: "feat-leaderboard",
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Feature Glass Card
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Feature glass card ───────────────────────────────────────────────────────
 function FeatureCard({
-  icon: Icon,
-  label,
-  desc,
-  color,
-  glowColor,
-  iconBg,
-  id,
-  reduced,
-}: (typeof FEATURES)[number] & { reduced: boolean }) {
+  icon: Icon, label, desc, color, glowColor, iconBg, id, reduced, index,
+}: (typeof FEATURES)[number] & { reduced: boolean; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
   return (
     <motion.div
+      ref={ref}
       id={id}
       className="feat-card px-5 py-5 flex flex-col items-start gap-3 text-left cursor-default"
+      initial={reduced ? false : { opacity: 0, y: 28 }}
+      animate={reduced ? undefined : inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+      transition={reduced ? undefined : {
+        duration: 0.55,
+        ease: EASE,
+        delay: index * 0.1,
+      }}
       whileHover={
         reduced
           ? {}
@@ -145,7 +85,6 @@ function FeatureCard({
             }
       }
     >
-      {/* Icon badge */}
       <span
         className="flex items-center justify-center w-9 h-9 rounded-xl"
         style={{ background: iconBg }}
@@ -160,22 +99,134 @@ function FeatureCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Home page
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Scroll-linked hero opacity/scale wrapper ─────────────────────────────────
+function HeroScrollLayer({
+  containerRef,
+  children,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  children: React.ReactNode;
+}) {
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Hero fades + scales down as user scrolls 0% → 60%
+  const rawOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const rawScale   = useTransform(scrollYProgress, [0, 0.55], [1, 0.88]);
+  const opacity = useSpring(rawOpacity, { stiffness: 120, damping: 28, mass: 0.6 });
+  const scale   = useSpring(rawScale,   { stiffness: 120, damping: 28, mass: 0.6 });
+
+  return (
+    <motion.div style={{ opacity, scale }} className="will-change-transform">
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Animated content section item ───────────────────────────────────────────
+function RevealItem({
+  children,
+  delay = 0,
+  reduced,
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  reduced: boolean;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={reduced ? false : { opacity: 0, y: 30 }}
+      animate={reduced ? undefined : inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={reduced ? undefined : { duration: 0.55, ease: EASE, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Cursor spotlight (outside React render cycle) ────────────────────────────
+function CursorSpotlight() {
+  const divRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const posRef = useRef({ x: -1000, y: -1000 });
+
+  const paint = useCallback(() => {
+    const el = divRef.current;
+    if (!el) return;
+    const { x, y } = posRef.current;
+    el.style.background = `radial-gradient(650px circle at ${x}px ${y}px,
+      rgba(34,229,229,0.05) 0%,
+      rgba(179,137,255,0.04) 35%,
+      transparent 70%)`;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    const onMove = (e: MouseEvent) => {
+      posRef.current = { x: e.clientX, y: e.clientY };
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(paint);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [paint]);
+
+  return <div ref={divRef} aria-hidden className="cursor-spotlight" />;
+}
+
+// ─── Static gradient fallback (for prefers-reduced-motion) ────────────────────
+function StaticHeroFallback() {
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center"
+      style={{
+        background:
+          "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(34,229,229,0.12) 0%, rgba(179,137,255,0.10) 40%, transparent 80%)",
+      }}
+      aria-hidden
+    />
+  );
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [input, setInput] = useState("");
+  const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]   = useState<string | null>(null);
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
 
-  // Choose variants based on motion preference
-  const iv = reduced ? itemVariantsReduced : itemVariants;
-  const cv = reduced
-    ? { ...containerVariants, show: { transition: { staggerChildren: 0 } } }
-    : containerVariants;
+  // Mouse position for R3F parallax (normalised -1 → +1)
+  const mouseRef = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    if (reduced) return;
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current = {
+        x: (e.clientX / window.innerWidth  - 0.5) * 2,
+        y: -(e.clientY / window.innerHeight - 0.5) * 2,
+      };
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [reduced]);
 
+  // Scroll container — useScroll targets this ref
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // ─── Profile submit ───────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim()) return;
@@ -209,52 +260,26 @@ export default function Home() {
     }
   }
 
-  return (
-    <>
-      {/* Cursor spotlight — outside React animation cycle */}
-      {!reduced && <CursorSpotlight />}
-
-      {/* ── Main stagger container ── */}
-      <motion.div
-        className="relative flex flex-col items-center text-center gap-14 py-14 px-4"
-        variants={cv}
-        initial="hidden"
-        animate="show"
-      >
-
-        {/* ── 1. Eyebrow pill ── */}
-        <motion.span
-          variants={iv}
-          className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted"
-        >
+  // ─── Reduced-motion: flat single-stage layout ─────────────────────────────
+  if (reduced) {
+    return (
+      <div className="flex flex-col items-center text-center gap-14 py-14 px-4">
+        <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted">
           <Sparkles className="w-3.5 h-3.5 text-violet" />
           Public profile tracking, reinvented
-        </motion.span>
-
-        {/* ── 2. Hero headline + subtext ── */}
-        <motion.div variants={iv} className="space-y-5 max-w-2xl -mt-6">
+        </span>
+        <div className="space-y-5 max-w-2xl -mt-6">
           <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-[1.05] tracking-tight text-mist">
             Track your{" "}
             <span className="gradient-text">Google Skills Arcade</span>{" "}
             run, beautifully.
           </h1>
-        </motion.div>
-
-        {/* ── 3. Subtext ── */}
-        <motion.p
-          variants={iv}
-          className="text-mist-muted max-w-md mx-auto text-base leading-relaxed -mt-10"
-        >
+        </div>
+        <p className="text-mist-muted max-w-md mx-auto text-base leading-relaxed -mt-10">
           Paste your public Skills Boost profile link or ID. We&apos;ll pull
           your points, badges, and start tracking your progress over time.
-        </motion.p>
-
-        {/* ── 4. Input / CTA ── */}
-        <motion.form
-          variants={iv}
-          onSubmit={handleSubmit}
-          className="w-full max-w-xl flex flex-col gap-3 -mt-6"
-        >
+        </p>
+        <form onSubmit={handleSubmit} className="w-full max-w-xl flex flex-col gap-3 -mt-6">
           <div className="url-input-wrap glass-strong gradient-ring rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
             <input
               id="profile-url-input"
@@ -265,76 +290,211 @@ export default function Home() {
               disabled={loading}
               aria-label="Skills Boost profile URL or ID"
             />
-            <motion.button
+            <button
               id="track-profile-btn"
               type="submit"
               disabled={loading}
               className="cta-btn rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-6 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-              whileHover={reduced ? {} : { scale: 1.02 }}
-              whileTap={reduced ? {} : { scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               {loading ? (
-                <>
-                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                  Fetching…
-                </>
+                <><RotateCw className="w-3.5 h-3.5 animate-spin" />Fetching…</>
               ) : (
-                <>
-                  Track profile
-                  <ArrowRight className="w-4 h-4" />
-                </>
+                <>Track profile<ArrowRight className="w-4 h-4" /></>
               )}
-            </motion.button>
+            </button>
           </div>
-
-          <AnimatePresence mode="wait">
-            {error && (
-              <motion.p
-                key="err"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm text-pink text-left px-2"
-              >
-                {error}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </motion.form>
-
-        {/* ── 5. Feature glass cards ── */}
-        <motion.div
-          variants={iv}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl -mt-4"
-        >
-          {FEATURES.map((f) => (
-            <FeatureCard key={f.id} {...f} reduced={reduced} />
+          {error && <p className="text-sm text-pink text-left px-2">{error}</p>}
+        </form>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl -mt-4">
+          {FEATURES.map((f, i) => (
+            <FeatureCard key={f.id} {...f} reduced index={i} />
           ))}
-        </motion.div>
-
-        {/* ── 6. Footer note ── */}
-        <motion.p
-          variants={iv}
-          className="text-xs text-mist-muted max-w-md -mt-6"
-        >
+        </div>
+        <p className="text-xs text-mist-muted max-w-md -mt-6">
           Your profile must have{" "}
           <span className="text-mist font-medium">Make profile public</span>{" "}
           enabled in Skills Boost account settings for this to work.
-        </motion.p>
+        </p>
+      </div>
+    );
+  }
 
-        {/* Bottom vignette */}
+  // ─── Full two-stage scroll experience ─────────────────────────────────────
+  return (
+    <>
+      <CursorSpotlight />
+
+      {/*
+        Outer container: 200vh tall so the sticky hero occupies the first
+        viewport and the content section peeks up below.
+      */}
+      <div ref={containerRef} style={{ minHeight: "200vh" }}>
+
+        {/* ── STAGE 1: Sticky 3D hero ────────────────────────────────────── */}
+        <div className="hero-canvas-wrap">
+          <HeroScrollLayer containerRef={containerRef}>
+            {/* Dark canvas background */}
+            <div
+              className="absolute inset-0"
+              style={{ background: "rgba(5,6,15,0.55)" }}
+              aria-hidden
+            />
+
+            {/* R3F canvas — full viewport */}
+            <div className="absolute inset-0">
+              <HeroScene mouseRef={mouseRef} />
+            </div>
+
+            {/* Hero title overlay — centred on the canvas */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6 pointer-events-none select-none">
+              {/* Eyebrow */}
+              <motion.span
+                className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted pointer-events-none"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, ease: EASE, delay: 0.3 }}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-violet" />
+                Public profile tracking, reinvented
+              </motion.span>
+
+              {/* H1 */}
+              <motion.h1
+                className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.04] tracking-tight text-mist text-center max-w-3xl"
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
+              >
+                Track your{" "}
+                <span className="gradient-text">Google Skills Arcade</span>{" "}
+                run, beautifully.
+              </motion.h1>
+
+              {/* Subtext */}
+              <motion.p
+                className="text-mist-muted max-w-sm text-sm sm:text-base leading-relaxed text-center"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, ease: EASE, delay: 0.6 }}
+              >
+                Scroll down to get started.
+              </motion.p>
+            </div>
+
+            {/* Scroll cue */}
+            <div
+              className="scroll-cue-wrap absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none"
+              aria-label="Scroll to continue"
+            >
+              <span className="text-[10px] uppercase tracking-widest text-mist-muted/60">
+                scroll
+              </span>
+              <ChevronDown className="scroll-cue w-5 h-5 text-mist-muted/70" />
+            </div>
+          </HeroScrollLayer>
+        </div>
+
+        {/* ── STAGE 2: Functional UI ──────────────────────────────────────── */}
+        {/*
+          Positioned at natural document flow below the hero.
+          margin-top: 100vh pushes it below the full sticky hero so the
+          user must scroll to reveal it.
+        */}
         <div
-          className="pointer-events-none absolute bottom-0 inset-x-0 h-32"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(5,6,15,0.7) 0%, transparent 100%)",
-          }}
+          style={{ marginTop: "-100vh" }}
+          className="relative z-10 pointer-events-none"
           aria-hidden
         />
-      </motion.div>
+        <div className="relative z-10 flex flex-col items-center text-center gap-12 px-4 py-20 pb-24">
+
+          {/* Eyebrow (scroll-triggered) */}
+          <RevealItem delay={0} reduced={reduced} className="w-full flex justify-center">
+            <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted">
+              <Sparkles className="w-3.5 h-3.5 text-violet" />
+              Public profile tracking, reinvented
+            </span>
+          </RevealItem>
+
+          {/* Headline */}
+          <RevealItem delay={0.08} reduced={reduced} className="-mt-6 max-w-2xl">
+            <h2 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.05] tracking-tight text-mist">
+              Track your{" "}
+              <span className="gradient-text">Google Skills Arcade</span>{" "}
+              run, beautifully.
+            </h2>
+          </RevealItem>
+
+          {/* Subtext */}
+          <RevealItem delay={0.16} reduced={reduced} className="-mt-6">
+            <p className="text-mist-muted max-w-md mx-auto text-base leading-relaxed">
+              Paste your public Skills Boost profile link or ID. We&apos;ll pull
+              your points, badges, and start tracking your progress over time.
+            </p>
+          </RevealItem>
+
+          {/* Input / CTA */}
+          <RevealItem delay={0.24} reduced={reduced} className="w-full max-w-xl -mt-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="url-input-wrap glass-strong gradient-ring rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
+                <input
+                  id="profile-url-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="https://www.skills.google/public_profiles/..."
+                  className="flex-1 bg-transparent px-4 py-3 text-sm text-mist placeholder:text-mist-muted focus:outline-none"
+                  disabled={loading}
+                  aria-label="Skills Boost profile URL or ID"
+                />
+                <motion.button
+                  id="track-profile-btn"
+                  type="submit"
+                  disabled={loading}
+                  className="cta-btn rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-6 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  {loading ? (
+                    <><RotateCw className="w-3.5 h-3.5 animate-spin" />Fetching…</>
+                  ) : (
+                    <>Track profile<ArrowRight className="w-4 h-4" /></>
+                  )}
+                </motion.button>
+              </div>
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.p
+                    key="err"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-sm text-pink text-left px-2"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </form>
+          </RevealItem>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl -mt-2">
+            {FEATURES.map((f, i) => (
+              <FeatureCard key={f.id} {...f} reduced={reduced} index={i} />
+            ))}
+          </div>
+
+          {/* Footer note */}
+          <RevealItem delay={0} reduced={reduced} className="-mt-4">
+            <p className="text-xs text-mist-muted max-w-md">
+              Your profile must have{" "}
+              <span className="text-mist font-medium">Make profile public</span>{" "}
+              enabled in Skills Boost account settings for this to work.
+            </p>
+          </RevealItem>
+        </div>
+      </div>
     </>
   );
 }
-

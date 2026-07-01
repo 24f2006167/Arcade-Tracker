@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
   }, []);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 py-12">
       <div className="space-y-2 rise-in">
         <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
           <span className="w-1.5 h-1.5 rounded-full bg-pink pulse-glow" />

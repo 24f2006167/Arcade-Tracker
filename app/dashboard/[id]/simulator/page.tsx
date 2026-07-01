@@ -63,7 +63,7 @@ export default function SimulatorPage() {
   );
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 rise-in">
+    <div className="max-w-2xl mx-auto space-y-8 rise-in py-12">
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Link

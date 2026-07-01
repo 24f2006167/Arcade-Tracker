@@ -176,7 +176,7 @@ export default function DashboardPage() {
   const facArcade = calculateArcadeResult(facBadges);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-12">
       {/* Top Navigation Back Redirection */}
       <div className="flex items-center justify-between rise-in">
         <Link

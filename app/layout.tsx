@@ -77,7 +77,7 @@ export default function RootLayout({
             </div>
           </div>
         </nav>
-        <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
+        <main className="mx-auto max-w-6xl px-6 overflow-x-hidden">{children}</main>
       </body>
     </html>
   );

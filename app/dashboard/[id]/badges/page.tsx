@@ -44,7 +44,7 @@ export default function BadgesPage() {
   }, [badges, query, filter]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-12">
       <div className="space-y-2 rise-in">
         <Link
           href={`/dashboard/${params.id}`}
