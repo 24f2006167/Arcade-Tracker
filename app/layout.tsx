@@ -30,6 +30,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.png",
     apple: "/favicon.png",
   },
+  verification: {
+    google: "PASTE_ONLY_THE_LONG_CODE_HERE",
+  },
 };
 
 import { AccountSwitcher, DashboardNavLink, SimulatorNavLink, AddProfileNavLink } from "@/components/AccountSwitcher";
