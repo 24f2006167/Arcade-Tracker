@@ -248,6 +248,14 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
 export const ACTIVE_SEASON_CONFIG: SeasonConfig = SEASON_2026_CONFIG;
 
 /**
+ * The date window for the current cohort season.
+ * Only badges earned within this window count toward Arcade Points.
+ * Jan 1 2026 00:00 UTC → Dec 31 2026 23:59:59 UTC
+ */
+export const COHORT_START = new Date("2026-01-01T00:00:00Z");
+export const COHORT_END   = new Date("2026-12-31T23:59:59Z");
+
+/**
  * ---------------------------------------------------------------------------
  * CLASSIFICATION
  * ---------------------------------------------------------------------------
@@ -546,13 +554,26 @@ export function computeSwagEligibility(
 /**
  * Main entry point. Pass the raw badge list scraped from a public profile —
  * never pass `profile.totalPoints`. Returns everything the dashboard needs.
+ *
+ * Only badges earned within the current cohort window (COHORT_START–COHORT_END)
+ * are counted toward Arcade Points. Badges from prior cohorts are excluded.
  */
 export function calculateArcadeResult(
   badges: RawBadge[],
   config: SeasonConfig = ACTIVE_SEASON_CONFIG,
   bonusMilestoneCompleted?: boolean
 ): ArcadeResult {
-  const classifiedBadges = classifyBadges(badges, config);
+  // Step 1: classify ALL scraped badges (needed for full badge list display)
+  const allClassified = classifyBadges(badges, config);
+
+  // Step 2: restrict scoring to current-cohort badges only (Jan 1 – Dec 31 2026)
+  const classifiedBadges = allClassified.filter((b) => {
+    if (!b.earnedDate) return false;
+    const d = new Date(b.earnedDate);
+    if (isNaN(d.getTime())) return false;
+    return d >= COHORT_START && d <= COHORT_END;
+  });
+
   const breakdown = computeBreakdown(classifiedBadges);
 
   // Milestones count ONLY badges earned during the Facilitator window (July 13 to September 14, 2026)
@@ -571,12 +592,11 @@ export function calculateArcadeResult(
 
   const achievedMilestones = milestones.filter((m) => m.achieved);
 
-  // Base points are the cumulative sum of all badges earned
+  // Base points: sum of cohort-only badge points
   const basePoints = classifiedBadges.reduce((sum, b) => sum + b.points, 0);
 
-  // Calculate milestone points based on the highest achieved milestone (non-cumulative)
+  // Milestone bonus: highest achieved milestone (non-cumulative)
   let milestoneBonus = 0;
-
   if (achievedMilestones.length > 0) {
     const highest = [...achievedMilestones].sort((a, b) => b.id - a.id)[0];
     milestoneBonus = highest.bonusPoints;
