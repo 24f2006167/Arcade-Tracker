@@ -18,6 +18,7 @@ export interface CatalogBadge {
 
 /** Game catalog with access codes and images from go.cloudskillsboost.google/arcade */
 export const ARCADE_GAMES: CatalogBadge[] = [
+  // ── June 2026 games (expired) ──
   {
     title: "Arcade Trail",
     type: "game",
@@ -84,7 +85,73 @@ export const ARCADE_GAMES: CatalogBadge[] = [
     startDate: "2026-06-01T00:00:00Z",
     endDate: "2026-06-30T23:59:59Z",
   },
-  // ── July 2026 games (add new ones here as they are announced) ──
+  // ── July 2026 games (verified from go.cloudskillsboost.google/arcade) ──
+  {
+    title: "Arcade Voyage",
+    type: "game",
+    url: "https://www.skills.google/games/7315",
+    imageUrl: "https://services.google.com/fh/files/misc/voyuge-july.png",
+    accessCode: "1q-bucket-58231",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
+  {
+    title: "Arcade Adventure",
+    type: "game",
+    url: "https://www.skills.google/games/7314",
+    imageUrl: "https://services.google.com/fh/files/misc/adv-july.png",
+    accessCode: "1q-lowcode-92316",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
+  {
+    title: "Arcade Base Camp",
+    type: "game",
+    url: "https://www.skills.google/games/7313",
+    imageUrl: "https://services.google.com/fh/files/misc/basecamp-july.png",
+    accessCode: "1q-basecamp-07511",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
+  {
+    title: "Arcade Trail",
+    type: "game",
+    url: "https://www.skills.google/games/7316",
+    imageUrl: "https://services.google.com/fh/files/misc/trail-july.png",
+    accessCode: "1q-workspace-31069",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
+  {
+    title: "Arcade Simulator: Data Mesh Architect",
+    type: "game",
+    url: "https://www.skills.google/games/7317",
+    imageUrl: "https://services.google.com/fh/files/misc/special-july.png",
+    accessCode: "1q-datamesh-16451",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
+  {
+    title: "Safe Spaces",
+    type: "game",
+    url: "https://www.skills.google/games/7318",
+    imageUrl: "https://services.google.com/fh/files/misc/new-special-game.png",
+    accessCode: "1q-security-19110",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-07-01T00:00:00Z",
+    endDate: "2026-07-31T23:59:59Z",
+  },
 ];
 
 

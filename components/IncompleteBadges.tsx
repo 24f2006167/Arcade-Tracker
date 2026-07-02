@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search, Gamepad2, Wrench, Brain, ExternalLink,
-  Copy, CheckCheck, Zap, Clock, XCircle, AlertTriangle,
+  Copy, CheckCheck, Zap, Clock, XCircle, RefreshCw,
 } from "lucide-react";
 import { CATALOG_BADGES, ARCADE_GAMES } from "@/lib/catalog";
+import type { CatalogBadge } from "@/lib/catalog";
 import type { Badge } from "@/lib/scraper";
 
 interface IncompleteBadgesProps {
@@ -99,30 +100,120 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
   const [activeTab, setActiveTab] = useState<"all" | "skill" | "trivia">("all");
   const [showAll, setShowAll] = useState(false);
 
+  // ── Live arcade games — SSE auto-stream ───────────────────────────────────
+  const [liveGames, setLiveGames] = useState<CatalogBadge[] | null>(null);
+  const [gamesSource, setGamesSource] = useState<"live" | "static-fallback" | "loading">("loading");
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+
+  /** Manual refresh: clears cache and re-fetches immediately */
+  const fetchLiveGames = useCallback(async () => {
+    setGamesSource("loading");
+    try {
+      const res = await fetch("/api/arcade-games", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data.games) && data.games.length > 0) {
+        setLiveGames(data.games);
+        setGamesSource(data.source === "live" ? "live" : "static-fallback");
+      } else {
+        setLiveGames(null);
+        setGamesSource("static-fallback");
+      }
+      setLastFetched(new Date());
+    } catch {
+      setLiveGames(null);
+      setGamesSource("static-fallback");
+      setLastFetched(new Date());
+    }
+  }, []);
+
+  /** SSE subscription — auto-receives pushes every 30 min from the server */
+  useEffect(() => {
+    // Immediate one-shot fetch first so data appears without waiting for SSE handshake
+    fetchLiveGames();
+
+    if (typeof EventSource === "undefined") return; // SSR guard
+
+    const es = new EventSource("/api/arcade-games/stream");
+
+    es.addEventListener("games", (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (Array.isArray(data.games) && data.games.length > 0) {
+          setLiveGames(data.games);
+          setGamesSource(data.source === "live" ? "live" : "static-fallback");
+          setLastFetched(new Date());
+        }
+      } catch { /* ignore parse errors */ }
+    });
+
+    es.onerror = () => {
+      // SSE disconnected — fall back silently, keep showing last known data
+      es.close();
+    };
+
+    return () => es.close();
+  }, [fetchLiveGames]);
+
+  /**
+   * Merge strategy:
+   * - Live fetch / SSE data wins.
+   * - Otherwise fall back to the static ARCADE_GAMES catalog (filtered to active).
+   */
+  const now = new Date().toISOString();
+  const staticActive = ARCADE_GAMES.filter((g) => !g.endDate || g.endDate > now);
+  const effectiveGames: CatalogBadge[] =
+    liveGames !== null ? liveGames : staticActive;
+
   const completedNormalized = new Set(completedBadges.map((b) => normalize(b.title)));
 
-  /* Smart keyword prefix match: "Arcade Trail" matches "Arcade Trail: Data Engineering…" */
-  const isGameCompleted = (gameTitle: string) => {
-    const key = normalize(gameTitle);
-    if (completedNormalized.has(key)) return true;
+  /* Smart keyword prefix match with date validation: "Arcade Trail" matches "Arcade Trail: Data Engineering…" only if earned during the game's active month */
+  const isGameCompleted = (game: CatalogBadge) => {
+    const key = normalize(game.title);
     return completedBadges.some((b) => {
       const ek = normalize(b.title);
-      return ek.startsWith(key) || key.startsWith(ek);
+      const titleMatches = ek === key || ek.startsWith(key) || key.startsWith(ek);
+      if (!titleMatches) return false;
+
+      // If we have date constraints, verify the earned date falls within the game's range
+      if (b.earnedDate && game.startDate) {
+        const earnedTime = new Date(b.earnedDate).getTime();
+        const startTime = new Date(game.startDate).getTime();
+        const endTime = game.endDate ? new Date(game.endDate).getTime() : Infinity;
+        if (earnedTime < startTime || earnedTime > endTime) {
+          return false;
+        }
+      }
+      return true;
     });
   };
 
-  const getMatchedEarnedBadge = (gameTitle: string) => {
-    const key = normalize(gameTitle);
+  const getMatchedEarnedBadge = (game: CatalogBadge) => {
+    const key = normalize(game.title);
     return completedBadges.find((b) => {
       const ek = normalize(b.title);
-      return ek === key || ek.startsWith(key) || key.startsWith(ek);
+      const titleMatches = ek === key || ek.startsWith(key) || key.startsWith(ek);
+      if (!titleMatches) return false;
+
+      if (b.earnedDate && game.startDate) {
+        const earnedTime = new Date(b.earnedDate).getTime();
+        const startTime = new Date(game.startDate).getTime();
+        const endTime = game.endDate ? new Date(game.endDate).getTime() : Infinity;
+        if (earnedTime < startTime || earnedTime > endTime) {
+          return false;
+        }
+      }
+      return true;
     });
   };
 
   /* ── Partition games into 3 buckets ── */
-  const completedGames  = ARCADE_GAMES.filter((g) => isGameCompleted(g.title));
-  const expiredGames    = ARCADE_GAMES.filter((g) => !isGameCompleted(g.title) && isExpired(g.endDate));
-  const activeGames     = ARCADE_GAMES.filter((g) => !isGameCompleted(g.title) && !isExpired(g.endDate));
+  // All-time list for expired/completed detection (static catalog includes historical data)
+  const allGames = ARCADE_GAMES;
+  const completedGames  = allGames.filter((g) => isGameCompleted(g));
+  const expiredGames    = allGames.filter((g) => !isGameCompleted(g) && isExpired(g.endDate));
+  // Active: use live/merged effective list, not expired, not already completed
+  const activeGames     = effectiveGames.filter((g) => !isGameCompleted(g) && !isExpired(g.endDate));
 
   /* ── Skill / trivia incomplete badges (exclude "game" type since games are handled at the top) ── */
   const incompleteSkills = CATALOG_BADGES.filter(
@@ -151,16 +242,46 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
             <h2 className="font-display text-sm font-semibold text-mist flex items-center gap-2">
               <Gamepad2 className="w-4 h-4 text-pink" />
               Arcade Games
+              {/* Live / loading indicator */}
+              {gamesSource === "loading" ? (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] text-mist-muted">
+                  <RefreshCw className="w-2.5 h-2.5 animate-spin" /> Fetching live…
+                </span>
+              ) : gamesSource === "live" ? (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/25 text-[9px] text-green-400 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Live
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber/10 border border-amber/20 text-[9px] text-amber">
+                  Cached
+                </span>
+              )}
             </h2>
             <p className="text-xs text-mist-muted mt-0.5">
               Each game badge = <span className="text-amber font-medium">1 Arcade Point</span>.
               Use the access code to enroll. Expires games are automatically removed.
+              {lastFetched && (
+                <span className="ml-2 opacity-50">
+                  · Updated {lastFetched.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
             </p>
           </div>
-          <a href="https://go.cloudskillsboost.google/arcade" target="_blank" rel="noopener noreferrer"
-            className="text-xs text-cyan hover:underline flex items-center gap-1 shrink-0">
-            View all on Arcade <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={fetchLiveGames}
+              disabled={gamesSource === "loading"}
+              title="Refresh live games"
+              className="flex items-center gap-1 text-xs text-mist-muted hover:text-cyan transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${gamesSource === "loading" ? "animate-spin" : ""}`} />
+            </button>
+            <a href="https://go.cloudskillsboost.google/arcade" target="_blank" rel="noopener noreferrer"
+              className="text-xs text-cyan hover:underline flex items-center gap-1">
+              View all on Arcade <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
 
         {/* ── Active (incomplete) games ── */}
@@ -211,6 +332,20 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
               </div>
             ))}
           </div>
+        ) : gamesSource === "loading" ? (
+          /* Loading skeleton */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-40 bg-white/5" />
+                <div className="p-4 space-y-3">
+                  <div className="h-3 bg-white/10 rounded-full w-1/3" />
+                  <div className="h-4 bg-white/10 rounded-full w-2/3" />
+                  <div className="h-8 bg-white/5 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="glass rounded-2xl p-6 text-center">
             <p className="text-2xl mb-2">🎮</p>
@@ -223,76 +358,6 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
           </div>
         )}
 
-        {/* ── Completed games (collapsed, reference only) ── */}
-        {completedGames.length > 0 && (
-          <details className="group">
-            <summary className="flex items-center gap-2 text-xs text-mist-muted cursor-pointer hover:text-mist transition-colors list-none select-none">
-              <span className="w-4 h-4 rounded-full bg-amber/20 border border-amber/30 text-amber flex items-center justify-center text-[9px] font-bold">
-                {completedGames.length}
-              </span>
-              <span className="font-medium">Earned games — moved to Earned Badges section</span>
-              <span className="ml-1 text-[10px] text-mist-muted/60 group-open:hidden">(click to show)</span>
-              <span className="ml-1 text-[10px] text-mist-muted/60 hidden group-open:inline">(click to hide)</span>
-            </summary>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {completedGames.map((game) => {
-                const earned = getMatchedEarnedBadge(game.title);
-                return (
-                  <div key={game.title}
-                    className="glass rounded-xl overflow-hidden flex gap-3 items-center p-3 border border-amber/20 opacity-80">
-                    <img src={earned?.imageUrl || game.imageUrl} alt={game.title}
-                      className="w-12 h-12 rounded-lg object-contain bg-black/30 p-1 shrink-0"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-[9px] text-amber font-semibold uppercase tracking-wider">✓ Earned</p>
-                      <p className="text-mist text-xs font-medium leading-tight line-clamp-2 mt-0.5">
-                        {earned?.title || game.title}
-                      </p>
-                      {earned?.earnedDate && (
-                        <p className="text-[9px] text-mist-muted mt-0.5">{earned.earnedDate}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </details>
-        )}
-
-        {/* ── Expired (ended) games ── */}
-        {expiredGames.length > 0 && (
-          <details className="group">
-            <summary className="flex items-center gap-2 text-xs text-mist-muted cursor-pointer hover:text-mist transition-colors list-none select-none">
-              <XCircle className="w-3.5 h-3.5 text-red-400/70" />
-              <span className="font-medium text-red-400/70">{expiredGames.length} expired game{expiredGames.length > 1 ? "s" : ""} — no longer available</span>
-              <span className="ml-1 text-[10px] text-mist-muted/60 group-open:hidden">(click to expand)</span>
-              <span className="ml-1 text-[10px] text-mist-muted/60 hidden group-open:inline">(click to hide)</span>
-            </summary>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {expiredGames.map((game) => (
-                <div key={game.title}
-                  className="glass rounded-xl overflow-hidden flex gap-2 items-center p-2.5 border border-red-500/10 opacity-50">
-                  <img src={game.imageUrl} alt={game.title}
-                    className="w-10 h-10 rounded-lg object-contain bg-black/30 p-1 shrink-0 grayscale"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-[9px] text-red-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                      <XCircle className="w-2.5 h-2.5" /> Expired
-                    </p>
-                    <p className="text-mist-muted text-[10px] font-medium leading-tight line-clamp-2 mt-0.5">{game.title}</p>
-                    {game.endDate && (
-                      <p className="text-[9px] text-mist-muted/50 mt-0.5">
-                        Ended {new Date(game.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
       </div>
 
       {/* ══ SKILL & TRIVIA BADGES ════════════════════════════════════════════ */}

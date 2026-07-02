@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, Press_Start_2P } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import BackgroundEffects from "@/components/BackgroundEffects";
+import HackerBootWrapper from "@/components/HackerBootWrapper";
 
 
 const inter = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({
         </div>
 
         <BackgroundEffects />
+        <HackerBootWrapper />
 
 
         <nav className="sticky top-0 z-50 glass border-b border-line/60">

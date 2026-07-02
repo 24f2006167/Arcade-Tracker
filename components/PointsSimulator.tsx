@@ -26,7 +26,7 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
     { name: "Arcade Legend", points: 120 },
   ];
 
-  // Calculate simulated base points
+  // Calculate simulated base points (cumulative sum of all badges)
   const simulatedBasePoints =
     simGames * 1 +
     simTrivia * 1 +
@@ -34,14 +34,15 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
     simLevel * 1 +
     Math.floor(simSkills / 2) * 1; // 2 skills = 1 pt
 
-  // Calculate simulated milestone bonus
+  // Calculate simulated milestone points and base points
   // Milestone rules:
-  // Milestone 1: 6 games + 18 skills -> +5 pts
-  // Milestone 2: 8 games + 34 skills -> +15 pts
-  // Milestone 3: 10 games + 50 skills -> +25 pts
-  // Ultimate Milestone: 12 games + 66 skills -> +35 pts
+  // Milestone 1: 6 games + 18 skills -> 5 bonus
+  // Milestone 2: 8 games + 34 skills -> 15 bonus
+  // Milestone 3: 10 games + 50 skills -> 25 bonus
+  // Ultimate Milestone: 12 games + 66 skills -> 35 bonus
   let simMilestonePoints = 0;
   let activeMilestone = "";
+
   if (simGames >= 12 && simSkills >= 66) {
     simMilestonePoints = 35;
     activeMilestone = "Ultimate Milestone";
@@ -56,10 +57,6 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
     activeMilestone = "Milestone 1";
   }
 
-  // Work Meets Play completion bonus: 0 points per badge, but completing 6 awards +7 pts.
-  // In our simulation, we just carry over current actual WMP bonus status for simplicity.
-  const wmpPoints = currentArcade.workMeetsPlay.bonusPoints;
-
   // Bonus milestone: Only eligible if they reached at least Milestone 1 (+5 pts)
   const isEligibleForBonusMilestone = simMilestonePoints > 0;
   const simBonusMilestonePoints = (simBonusMilestone && isEligibleForBonusMilestone) ? 10 : 0;
@@ -67,7 +64,6 @@ export function PointsSimulator({ currentArcade, initialBonusMilestone }: Points
   const totalSimulatedPoints =
     simulatedBasePoints +
     simMilestonePoints +
-    wmpPoints +
     simBonusMilestonePoints;
 
   // Determine tier based on simulated points

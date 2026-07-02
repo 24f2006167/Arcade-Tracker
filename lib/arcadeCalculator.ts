@@ -555,8 +555,6 @@ export function calculateArcadeResult(
   const classifiedBadges = classifyBadges(badges, config);
   const breakdown = computeBreakdown(classifiedBadges);
 
-  const basePoints = classifiedBadges.reduce((sum, b) => sum + b.points, 0);
-
   // Milestones count ONLY badges earned during the Facilitator window (July 13 to September 14, 2026)
   const facilitatorBadges = classifiedBadges.filter((b) => {
     if (!b.earnedDate) return false;
@@ -572,9 +570,17 @@ export function calculateArcadeResult(
   const workMeetsPlay = computeWorkMeetsPlay(breakdown, config);
 
   const achievedMilestones = milestones.filter((m) => m.achieved);
-  const milestoneBonus = achievedMilestones.length > 0
-    ? Math.max(...achievedMilestones.map((m) => m.bonusPoints))
-    : 0;
+
+  // Base points are the cumulative sum of all badges earned
+  const basePoints = classifiedBadges.reduce((sum, b) => sum + b.points, 0);
+
+  // Calculate milestone points based on the highest achieved milestone (non-cumulative)
+  let milestoneBonus = 0;
+
+  if (achievedMilestones.length > 0) {
+    const highest = [...achievedMilestones].sort((a, b) => b.id - a.id)[0];
+    milestoneBonus = highest.bonusPoints;
+  }
 
   // Bonus milestone points (10 pts) - only active if they completed it AND achieved at least Milestone 1
   const isBonusMilestoneEligible = achievedMilestones.length > 0;
@@ -582,9 +588,8 @@ export function calculateArcadeResult(
   const isBonusMilestoneCompleted = bonusMilestoneCompleted ?? hasCertification;
   const bonusMilestonePoints = (isBonusMilestoneEligible && isBonusMilestoneCompleted) ? 10 : 0;
 
-  const bonusPoints = milestoneBonus + bonusMilestonePoints + workMeetsPlay.bonusPoints;
-
-  const totalArcadePoints = Math.round((basePoints + bonusPoints) * 100) / 100;
+  const bonusPoints = milestoneBonus + bonusMilestonePoints;
+  const totalArcadePoints = basePoints + bonusPoints;
 
   const tiers = computeTiers(totalArcadePoints, config);
   const swag = computeSwagEligibility(totalArcadePoints, config);
