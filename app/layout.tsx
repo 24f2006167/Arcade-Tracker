@@ -26,9 +26,24 @@ export const metadata: Metadata = {
   title: "STS Arcade Tracker",
   description: "Track your Google Skills Arcade points, badges, and leaderboard.",
   icons: {
-    icon: "/favicon.png",
+    icon: [
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "STS Arcade Tracker",
+    description: "Track your Google Skills Arcade points, badges, and leaderboard.",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "STS Arcade Tracker" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "STS Arcade Tracker",
+    description: "Track your Google Skills Arcade points, badges, and leaderboard.",
+    images: ["/favicon.png"],
   },
   verification: {
     google: "7WPzAaeNIRGkKp12lRapCdGKW-LDnZWdHmTgTSRoVTI",
