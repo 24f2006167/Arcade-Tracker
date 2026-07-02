@@ -51,6 +51,7 @@ export const metadata: Metadata = {
 };
 
 import { AccountSwitcher, DashboardNavLink, SimulatorNavLink, AddProfileNavLink } from "@/components/AccountSwitcher";
+import VoiceAgent from "@/components/VoiceAgent"; // EXPERIMENTAL — remove if not keeping
 
 export default function RootLayout({
   children,
@@ -102,6 +103,9 @@ export default function RootLayout({
           </div>
         </nav>
         <main className="mx-auto max-w-6xl px-6 overflow-x-hidden">{children}</main>
+
+        {/* EXPERIMENTAL: Voice Agent — remove the line below + VoiceAgent.tsx to revert */}
+        <VoiceAgent />
       </body>
     </html>
   );
