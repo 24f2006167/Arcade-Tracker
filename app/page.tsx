@@ -5,6 +5,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowRight, Sparkles, Trophy, Zap, RotateCw, ChevronDown } from "lucide-react";
 import {
   motion,
@@ -164,9 +165,6 @@ function CursorSpotlight() {
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [input, setInput]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState<string | null>(null);
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
 
@@ -184,66 +182,10 @@ export default function Home() {
     return () => window.removeEventListener("mousemove", onMove);
   }, [reduced]);
 
-  // Scroll container — useScroll targets this ref
+  // Scroll container ref
   const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
 
-  const springConfig = { stiffness: 100, damping: 25, mass: 0.5 };
-  
-  // Hero opacity and scale transforms
-  const heroOpacityRaw = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-  const heroScaleRaw = useTransform(scrollYProgress, [0, 0.75], [1, 0.85]);
-  const heroYRaw = useTransform(scrollYProgress, [0, 0.75], [0, -50]);
-  
-  const heroOpacity = useSpring(heroOpacityRaw, springConfig);
-  const heroScale = useSpring(heroScaleRaw, springConfig);
-  const heroY = useSpring(heroYRaw, springConfig);
-
-  // Content (Stage 2) transforms
-  const contentOpacityRaw = useTransform(scrollYProgress, [0.35, 0.95], [0, 1]);
-  const contentYRaw = useTransform(scrollYProgress, [0.35, 0.95], [120, 0]);
-  
-  const contentOpacity = useSpring(contentOpacityRaw, springConfig);
-  const contentY = useSpring(contentYRaw, springConfig);
-
-  // ─── Profile submit ───────────────────────────────────────────────────────
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      if (typeof window !== "undefined" && data.profileId) {
-        const stored = localStorage.getItem("arcade_profiles");
-        let list: any[] = [];
-        try { list = stored ? JSON.parse(stored) : []; } catch (_) {}
-        const finalPoints = data.arcadeResult?.totalArcadePoints ?? 0;
-        list = list.filter((p: any) => p.id !== data.profileId);
-        list.push({ id: data.profileId, name: data.name, points: finalPoints });
-        localStorage.setItem("arcade_profiles", JSON.stringify(list));
-        localStorage.setItem("last_profile_id", data.profileId);
-      }
-
-      router.push(`/dashboard/${data.profileId}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch profile");
-      setLoading(false);
-    }
-  }
-
-  // ─── Reduced-motion: flat single-stage layout ─────────────────────────────
+  // ─── Reduced-motion fallback ──────────────────────────────────────────────
   if (reduced) {
     return (
       <div className="flex flex-col items-center text-center gap-14 py-14 px-4">
@@ -253,224 +195,73 @@ export default function Home() {
         </span>
         <div className="space-y-5 max-w-2xl -mt-6">
           <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-[1.05] tracking-tight text-mist">
-            Track your{" "}
-            <span className="gradient-text">Google Skills Arcade</span>{" "}
-            run, beautifully.
+            Track your <span className="gradient-text">Google Skills Arcade</span> run, beautifully.
           </h1>
         </div>
         <p className="text-mist-muted max-w-md mx-auto text-base leading-relaxed -mt-10">
-          Paste your public Skills Boost profile link or ID. We&apos;ll pull
-          your points, badges, and start tracking your progress over time.
+          Visualise milestones, simulate badge targets, and check live global leaderboards instantly.
         </p>
-        <form onSubmit={handleSubmit} className="w-full max-w-xl flex flex-col gap-3 -mt-6">
-          <div className="url-input-wrap glass-strong gradient-ring rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
-            <input
-              id="profile-url-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="https://www.skills.google/public_profiles/..."
-              className="flex-1 bg-transparent px-4 py-3 text-sm text-mist placeholder:text-mist-muted focus:outline-none"
-              disabled={loading}
-              aria-label="Skills Boost profile URL or ID"
-            />
-            <button
-              id="track-profile-btn"
-              type="submit"
-              disabled={loading}
-              className="cta-btn rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-6 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {loading ? (
-                <><RotateCw className="w-3.5 h-3.5 animate-spin" />Fetching…</>
-              ) : (
-                <>Track profile<ArrowRight className="w-4 h-4" /></>
-              )}
+        <div className="w-full max-w-sm mx-auto -mt-6">
+          <Link href="/add-profile">
+            <button className="w-full rounded-2xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-8 py-4 text-base flex items-center justify-center gap-2">
+              Track a profile
+              <ArrowRight className="w-5 h-5" />
             </button>
-          </div>
-          {error && <p className="text-sm text-pink text-left px-2">{error}</p>}
-        </form>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl -mt-4">
-          {FEATURES.map((f, i) => (
-            <FeatureCard key={f.id} {...f} reduced index={i} />
-          ))}
+          </Link>
         </div>
-        <p className="text-xs text-mist-muted max-w-md -mt-6">
-          Your profile must have{" "}
-          <span className="text-mist font-medium">Make profile public</span>{" "}
-          enabled in Skills Boost account settings for this to work.
-        </p>
       </div>
     );
   }
 
-  // ─── Full two-stage scroll experience ─────────────────────────────────────
+  // ─── Full single-screen experience ─────────────────────────────────────
   return (
     <>
       <CursorSpotlight />
 
-      <div className="relative w-full">
-        {/* ── STAGE 1: Spacer + Sticky 3D hero ── */}
-        <div ref={heroRef} className="relative w-full h-[100vh] md:h-[100dvh]">
-          <div className="sticky top-0 left-0 w-full h-[100vh] md:h-[100dvh] overflow-hidden z-0 bg-void">
-            {/* Cyber HUD elements layering: */}
-            
-            {/* 1. Code Rain canvas (ambient texture background) */}
-            <CodeRain reduced={reduced} />
-
-            {/* 2. R3F canvas (ambient 3D objects target) */}
-            <div className="hero-canvas-wrap" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-              <HeroScene mouseRef={mouseRef} />
-            </div>
-
-            {/* 3. HUD Scanlines overlay */}
-            <div className="hud-scanlines" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-
-            {/* 4. CRT Vignette overlay */}
-            <div className="hud-vignette" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-
-            {/* 5. Title/visual elements (fading/scaling on scroll) */}
-            <motion.div 
-              style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6 pointer-events-none select-none z-10 will-change-transform"
-            >
-              {/* Eyebrow */}
-              <motion.span
-                className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, ease: EASE, delay: 0.3 }}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-violet" />
-                Public profile tracking, reinvented
-              </motion.span>
-
-              {/* Headline */}
-              <motion.h1
-                className="glitch-text font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.04] tracking-tight text-mist text-center max-w-3xl"
-                initial={{ opacity: 0, y: 22 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
-              >
-                Track your{" "}
-                <span className="gradient-text">Google Skills Arcade</span>{" "}
-                run, beautifully.
-              </motion.h1>
-
-              {/* Subtext */}
-              <motion.p
-                className="text-mist-muted max-w-sm text-sm sm:text-base leading-relaxed text-center"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, ease: EASE, delay: 0.6 }}
-              >
-                Scroll down to get started.
-              </motion.p>
-            </motion.div>
-
-            {/* Scroll cue */}
-            <motion.div
-              style={{ opacity: heroOpacity }}
-              className="scroll-cue-wrap absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-10"
-              aria-label="Scroll to continue"
-            >
-              <span className="text-[10px] uppercase tracking-widest text-mist-muted/60">
-                scroll
-              </span>
-              <ChevronDown className="scroll-cue w-5 h-5 text-mist-muted/70" />
-            </motion.div>
-          </div>
+      <div ref={heroRef} className="relative w-full max-w-7xl mx-auto h-[82vh] md:h-[85vh] flex flex-col md:flex-row items-center justify-between px-6 md:px-16 overflow-hidden z-10">
+        {/* 1. R3F canvas (aligned to the right on desktop, background on mobile) */}
+        <div className="hero-canvas-wrap absolute inset-0 md:left-[52%] md:right-0 md:w-[48%] h-full pointer-events-none z-10">
+          <HeroScene mouseRef={mouseRef} />
         </div>
 
-        {/* ── STAGE 2: Functional UI ── */}
+        {/* 2. Title and CTA button overlay (aligned left on desktop, centered on mobile) */}
         <motion.div 
-          style={{ opacity: contentOpacity, y: contentY }}
-          className="relative z-10 flex flex-col items-center text-center gap-12 px-4 py-20 pb-24 bg-void border-t border-line/20 will-change-transform"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.65, ease: EASE }}
+          className="relative flex flex-col items-center md:items-start text-center md:text-left gap-6 select-none z-20 max-w-xl md:max-w-lg md:mr-auto"
         >
           {/* Eyebrow */}
-          <RevealItem delay={0} reduced={reduced} className="w-full flex justify-center">
-            <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted">
-              <Sparkles className="w-3.5 h-3.5 text-violet" />
-              Public profile tracking, reinvented
-            </span>
-          </RevealItem>
+          <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-mist-muted">
+            <Sparkles className="w-3.5 h-3.5 text-violet" />
+            Public profile tracking, reinvented
+          </span>
 
           {/* Headline */}
-          <RevealItem delay={0.08} reduced={reduced} className="-mt-6 max-w-2xl">
-            <h2 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.05] tracking-tight text-mist">
-              Track your{" "}
-              <span className="gradient-text">Google Skills Arcade</span>{" "}
-              run, beautifully.
-            </h2>
-          </RevealItem>
+          <h1 className="glitch-text font-display text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.08] tracking-tight text-mist">
+            Track your <span className="gradient-text">Google Skills Arcade</span> run, beautifully.
+          </h1>
 
           {/* Subtext */}
-          <RevealItem delay={0.16} reduced={reduced} className="-mt-6">
-            <p className="text-mist-muted max-w-md mx-auto text-base leading-relaxed">
-              Paste your public Skills Boost profile link or ID. We&apos;ll pull
-              your points, badges, and start tracking your progress over time.
-            </p>
-          </RevealItem>
+          <p className="text-mist-muted max-w-md text-sm sm:text-base leading-relaxed">
+            Visualise milestones, simulate badge targets, and check live global leaderboards instantly.
+          </p>
 
-          {/* Input / CTA */}
-          <RevealItem delay={0.24} reduced={reduced} className="w-full max-w-xl -mt-4">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="url-input-wrap glass-strong gradient-ring rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
-                <input
-                  id="profile-url-input"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="https://www.skills.google/public_profiles/..."
-                  className="flex-1 bg-transparent px-4 py-3 text-sm text-mist placeholder:text-mist-muted focus:outline-none"
-                  disabled={loading}
-                  aria-label="Skills Boost profile URL or ID"
-                />
-                <motion.button
-                  id="track-profile-btn"
-                  type="submit"
-                  disabled={loading}
-                  className="cta-btn rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-6 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  {loading ? (
-                    <><RotateCw className="w-3.5 h-3.5 animate-spin" />Fetching…</>
-                  ) : (
-                    <>Track profile<ArrowRight className="w-4 h-4" /></>
-                  )}
-                </motion.button>
-              </div>
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.p
-                    key="err"
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-sm text-pink text-left px-2"
-                  >
-                    {error}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </form>
-          </RevealItem>
-
-          {/* Feature cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl -mt-2">
-            {FEATURES.map((f, i) => (
-              <FeatureCard key={f.id} {...f} reduced={reduced} index={i} />
-            ))}
+          {/* CTA Link Button */}
+          <div className="w-full max-w-xs mt-2 pointer-events-auto">
+            <Link href="/add-profile">
+              <motion.button
+                id="landing-cta-btn"
+                className="w-full rounded-2xl bg-gradient-to-r from-cyan via-violet to-pink text-void font-semibold px-8 py-4 text-base flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                Track a profile
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
           </div>
-
-          {/* Footer note */}
-          <RevealItem delay={0} reduced={reduced} className="-mt-4">
-            <p className="text-xs text-mist-muted max-w-md">
-              Your profile must have{" "}
-              <span className="text-mist font-medium">Make profile public</span>{" "}
-              enabled in Skills Boost account settings for this to work.
-            </p>
-          </RevealItem>
         </motion.div>
       </div>
     </>

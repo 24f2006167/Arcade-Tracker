@@ -253,3 +253,37 @@ export function SimulatorNavLink() {
     </Link>
   );
 }
+
+export function AddProfileNavLink() {
+  const [hasProfiles, setHasProfiles] = useState<boolean>(false);
+  const params = useParams<{ id: string }>();
+
+  const checkProfiles = () => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("arcade_profiles");
+    try {
+      const list = stored ? JSON.parse(stored) : [];
+      setHasProfiles(list.length > 0);
+    } catch (_) {
+      setHasProfiles(false);
+    }
+  };
+
+  useEffect(() => {
+    checkProfiles();
+    window.addEventListener("storage", checkProfiles);
+    window.addEventListener("profile_added", checkProfiles);
+    return () => {
+      window.removeEventListener("storage", checkProfiles);
+      window.removeEventListener("profile_added", checkProfiles);
+    };
+  }, [params?.id]);
+
+  if (hasProfiles) return null;
+
+  return (
+    <Link href="/add-profile" className="hover:text-cyan transition-colors">
+      Add profile
+    </Link>
+  );
+}

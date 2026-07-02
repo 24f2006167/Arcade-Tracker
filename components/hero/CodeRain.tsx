@@ -31,18 +31,28 @@ export default function CodeRain({ reduced }: { reduced: boolean }) {
     let drops: number[] = [];
     let columnGlyphs: string[][] = [];
 
-    // Expansive digital matrix tokens list
+    // Hacker Matrix C++ & HUD tokens list (matching user screenshot)
     const tokens = [
-      // Binary digits
-      "0", "1", "0", "1",
-      // Hex pairs
-      "0x00", "0xff", "0x1a", "0x3b", "0x7e", "0x0f", "0x2c", "0xe2", "0xd5", "0xbc",
-      // Code fragments / Keywords / Operators
-      "const", "=>", "{}", "[]", "()", "async", "await", "fetch", "api", "points", 
-      "badges", "run", "STS", "Arcade", "Google", "track", "id", "url", "db", "res", 
-      "map", "filter", "&&", "||", "===", "npm", "fiber", "drei", "import", "return", 
-      "let", "class", "interface", "export", "default", "from", "Object", "Array", 
-      "Promise", "typeof", "instanceof", "+=", "-=", ">=", "++", "--", "?.", "??"
+      "#include <string>",
+      "using namespace std;",
+      "char buf[11];",
+      "int a, b, c;",
+      "sscanf(s.c_str(), \"%d-%d-%d\", &a, &b, &c);",
+      "sprintf(buf, \"%02d/%02d/%d\", c, b, a);",
+      "string find_date(string card_no)",
+      "int main()",
+      "cout << find_date(\"2012-09-28\") << endl;",
+      "system(\"pause\");",
+      "return 0;",
+      "2166.846",
+      "3645.508",
+      "1092.483",
+      "8314.920",
+      "[ACCESS GRANTED]",
+      "[SYSTEM OVERRIDE]",
+      "[COMPILING...]",
+      "char", "int", "string", "cout", "endl", "0x00", "0xff",
+      "0", "1", "x", "y", "z", "[]", "{}", "()", "++", "--"
     ];
 
     const resizeCanvas = () => {
@@ -50,15 +60,13 @@ export default function CodeRain({ reduced }: { reduced: boolean }) {
       canvas.width = rect.width || window.innerWidth;
       canvas.height = rect.height || window.innerHeight;
 
-      // Spacing columns at 20px for high density matrix code rain
-      columns = Math.ceil(canvas.width / 20);
+      // Sparse columns at 36px spacing for low density background rain
+      columns = Math.ceil(canvas.width / 36);
       drops = [];
       columnGlyphs = [];
 
       for (let i = 0; i < columns; i++) {
-        // Stagger drops starting positions
         drops[i] = Math.random() * -100;
-        // Generate pre-cached pool of glyphs for each column
         columnGlyphs[i] = Array.from(
           { length: 50 },
           () => tokens[Math.floor(Math.random() * tokens.length)]
@@ -69,12 +77,13 @@ export default function CodeRain({ reduced }: { reduced: boolean }) {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Matrix rain configuration
+    // Matrix configuration
     const fontSize = 12;
-    const colors = ["#22e5e5", "#b389ff", "#ff6fb3"];
+    // Cyan, Neon Teal, Deep Blue, Violet, Pink
+    const colors = ["#22e5e5", "#00d2ff", "#00a2ff", "#b389ff", "#ff6fb3"];
 
     let lastTime = 0;
-    const fps = 24; // Limit FPS to save CPU/GPU cycles
+    const fps = 24; 
     const interval = 1000 / fps;
 
     const draw = (timestamp: number) => {
@@ -90,34 +99,34 @@ export default function CodeRain({ reduced }: { reduced: boolean }) {
       }
       lastTime = timestamp - (elapsed % interval);
 
-      // Semi-transparent overlay to fade older rain frames
-      ctx.fillStyle = "rgba(5, 6, 15, 0.14)";
+      // Fade older frames faster with 0.22 opacity overlay
+      ctx.fillStyle = "rgba(5, 6, 15, 0.22)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.font = `bold ${fontSize}px monospace`;
 
       for (let i = 0; i < columns; i++) {
-        const x = i * 20;
-        const y = drops[i] * (fontSize + 4);
+        const x = i * 36;
+        const y = drops[i] * (fontSize + 6);
 
-        // Select pre-cached token for column
         const glyphIndex = Math.floor(drops[i]) % (columnGlyphs[i]?.length || 40);
         const text = columnGlyphs[i]?.[Math.abs(glyphIndex)] || "1";
 
-        // Leading char is bright white, others are themed gradients
+        // Assign colors (no shadow glow to prevent bright glares)
         if (Math.random() > 0.985) {
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
         } else {
           ctx.fillStyle = colors[(i + Math.floor(drops[i])) % colors.length];
         }
+        ctx.shadowBlur = 0; // Completely disable shadow glow for ultra-dim flat text
 
-        // Faint low opacity so content text stays extremely readable
-        ctx.globalAlpha = 0.12 + (i % 5) * 0.01; // Vary opacity between 0.12 - 0.16
+        // Ultra-faint low opacity (between 0.015 and 0.035)
+        ctx.globalAlpha = 0.015 + (i % 5) * 0.005; 
         ctx.fillText(text, x, y);
         ctx.globalAlpha = 1.0;
 
-        // Reset drop back to top
-        if (y > canvas.height && Math.random() > 0.98) {
+        // Reset drop
+        if (y > canvas.height && Math.random() > 0.985) {
           drops[i] = 0;
           columnGlyphs[i] = Array.from(
             { length: 50 },
@@ -125,7 +134,7 @@ export default function CodeRain({ reduced }: { reduced: boolean }) {
           );
         }
 
-        drops[i] += 0.55; // Controlled falling speed
+        drops[i] += 0.5; // Steady fall speed
       }
 
       animationFrameId = requestAnimationFrame(draw);

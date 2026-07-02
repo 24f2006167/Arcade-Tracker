@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Press_Start_2P } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import BackgroundEffects from "@/components/BackgroundEffects";
+
 
 const inter = Inter({
   variable: "--font-body",
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
   },
 };
 
-import { AccountSwitcher, DashboardNavLink, SimulatorNavLink } from "@/components/AccountSwitcher";
+import { AccountSwitcher, DashboardNavLink, SimulatorNavLink, AddProfileNavLink } from "@/components/AccountSwitcher";
 
 export default function RootLayout({
   children,
@@ -46,8 +48,12 @@ export default function RootLayout({
           <div className="aurora-blob a1" />
           <div className="aurora-blob a2" />
           <div className="aurora-blob a3" />
+          <div className="aurora-blob a4" />
           <div className="aurora-grain" />
         </div>
+
+        <BackgroundEffects />
+
 
         <nav className="sticky top-0 z-50 glass border-b border-line/60">
           <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
@@ -62,9 +68,7 @@ export default function RootLayout({
               </span>
             </Link>
             <div className="flex items-center gap-5 sm:gap-6 text-sm text-mist-muted">
-              <Link href="/" className="hover:text-cyan transition-colors">
-                Add profile
-              </Link>
+              <AddProfileNavLink />
               <DashboardNavLink />
               <SimulatorNavLink />
               <Link href="/leaderboard" className="hover:text-pink transition-colors">
