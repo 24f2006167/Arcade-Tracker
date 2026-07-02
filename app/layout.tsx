@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     apple: "/favicon.png",
   },
   verification: {
-    google: "PASTE_ONLY_THE_LONG_CODE_HERE",
+    google: "7WPzAaeNIRGkKp12lRapCdGKW-LDnZWdHmTgTSRoVTI",
   },
 };
 
