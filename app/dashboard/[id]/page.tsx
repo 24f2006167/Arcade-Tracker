@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft } from "lucide-react";
+import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX } from "lucide-react";
 import { ScoreboardStrip } from "@/components/ScoreboardStrip";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { IncompleteBadges } from "@/components/IncompleteBadges";
@@ -53,11 +53,25 @@ interface ProfileResponse {
   bonusMilestone?: BonusMilestoneInfo;
 }
 
+/** Returns true if this profileId is saved in the user's own localStorage. */
+function isOwnedProfile(id: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const stored = localStorage.getItem("arcade_profiles");
+    if (!stored) return false;
+    const list: { id: string }[] = JSON.parse(stored);
+    return list.some((p) => p.id === id);
+  } catch {
+    return false;
+  }
+}
+
 export default function DashboardPage() {
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/profile?id=${params.id}`);
@@ -70,8 +84,11 @@ export default function DashboardPage() {
   }, [params.id]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    // Check ownership before loading data
+    const owned = isOwnedProfile(params.id);
+    setAccessGranted(owned);
+    if (owned) load();
+  }, [params.id, load]);
 
   useEffect(() => {
     if (data && params.id) {
@@ -119,7 +136,43 @@ export default function DashboardPage() {
     return <p className="text-pink text-sm text-center py-20">{error}</p>;
   }
 
-  if (!data) {
+  // Show a lock screen if the profile doesn't belong to this user
+  if (accessGranted === false) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 py-28 text-center">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-pink/20 blur-2xl scale-150" />
+          <div className="relative w-20 h-20 rounded-2xl glass-strong border border-pink/30 flex items-center justify-center">
+            <ShieldX className="w-10 h-10 text-pink" />
+          </div>
+        </div>
+        <div className="space-y-3 max-w-sm">
+          <h1 className="font-display text-2xl font-semibold text-mist">Access Denied</h1>
+          <p className="text-mist-muted text-sm leading-relaxed">
+            This dashboard belongs to another player. You can only view your{" "}
+            <span className="text-mist font-medium">own dashboard</span> after
+            tracking your profile.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void text-sm font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Track your own profile
+          </Link>
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass border border-line/40 text-mist text-sm hover:bg-white/10 transition-colors"
+          >
+            Back to Leaderboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessGranted === null || !data) {
     return (
       <div className="flex flex-col items-center gap-3 py-24">
         <span className="text-mist-muted text-sm animate-pulse">Loading profile...</span>
