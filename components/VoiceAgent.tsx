@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Mic, MicOff, X, Bot, Volume2, VolumeX, Send, Navigation } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -297,7 +297,7 @@ function processMessage(text: string, ctx: ReturnType<typeof getUserContext>) {
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function VoiceAgent() {
   const router = useRouter();
-  const pathname = usePathname();
+
 
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
