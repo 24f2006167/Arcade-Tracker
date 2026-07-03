@@ -547,11 +547,26 @@ export default function VoiceAgent() {
             </button>
             {voiceSupported && (
               <button type="button" onClick={toggleMic} disabled={speaking} aria-label={listening ? "Stop" : "Speak"}
-                className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 disabled:opacity-40 shrink-0 ${
-                  listening ? "bg-pink/20 border-2 border-pink text-pink" : "bg-white/8 border border-white/15 text-mist-muted hover:text-mist hover:bg-white/15"
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-all duration-300 disabled:opacity-40"
+                style={listening ? {} : { animation: "mic-glow 2s ease-in-out infinite" }}
+              >
+                {/* Glow layer */}
+                <span className={`absolute inset-0 rounded-xl blur-sm ${
+                  listening
+                    ? "bg-pink"
+                    : "bg-gradient-to-br from-cyan via-violet to-pink opacity-70"
+                }`} />
+                {/* Button face */}
+                <span className={`relative flex items-center justify-center w-10 h-10 rounded-xl ${
+                  listening
+                    ? "bg-pink/30 border-2 border-pink text-pink"
+                    : "bg-gradient-to-br from-cyan via-violet to-pink text-void"
                 }`}>
-                {listening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                {listening && <span className="absolute inset-0 rounded-xl border-2 border-pink/50 animate-ping" />}
+                  {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </span>
+                {/* Pulse rings */}
+                {listening && <span className="absolute inset-0 rounded-xl border-2 border-pink animate-ping opacity-75" />}
+                {!listening && <span className="absolute inset-[-3px] rounded-[14px] border border-cyan/40 animate-ping opacity-50" />}
               </button>
             )}
           </form>
@@ -559,7 +574,20 @@ export default function VoiceAgent() {
       )}
 
       <style>{`
-        @keyframes wave { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+        @keyframes wave {
+          from { transform: scaleY(0.3); }
+          to   { transform: scaleY(1); }
+        }
+        @keyframes mic-glow {
+          0%, 100% {
+            filter: drop-shadow(0 0 4px rgba(34,229,229,0.8)) drop-shadow(0 0 10px rgba(139,92,246,0.5));
+            transform: scale(1);
+          }
+          50% {
+            filter: drop-shadow(0 0 8px rgba(34,229,229,1)) drop-shadow(0 0 20px rgba(236,72,153,0.7));
+            transform: scale(1.05);
+          }
+        }
       `}</style>
     </>
   );
