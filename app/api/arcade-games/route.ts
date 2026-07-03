@@ -89,9 +89,52 @@ function stripTags(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function parseArcadePage(rawHtml: string): CatalogBadge[] {
+interface ScrapedPrizeTier {
+  name: string;
+  left: number;
+  total: number;
+}
+
+interface ScrapedArcadeData {
+  games: CatalogBadge[];
+  prizeTiers: ScrapedPrizeTier[];
+  lastRefreshedText?: string;
+}
+
+function parseArcadePage(rawHtml: string): ScrapedArcadeData {
   // First pass: find and decode all embedded HTML entity blocks
   const decoded = decodeEntities(rawHtml);
+
+  // Parse spot limits
+  const spotRegex = /<div class="tier-points">(\d+)\s*\/\s*(\d+)\s*spots left<\/div>/gi;
+  const spotMatches = [...decoded.matchAll(spotRegex)];
+  const tierNames = ["Arcade Trooper", "Arcade Ranger", "Arcade Champion", "Arcade Legend"];
+  const prizeTiers: ScrapedPrizeTier[] = [];
+
+  spotMatches.forEach((m, i) => {
+    if (i < tierNames.length) {
+      prizeTiers.push({
+        name: tierNames[i],
+        left: parseInt(m[1], 10),
+        total: parseInt(m[2], 10),
+      });
+    }
+  });
+
+  // Fallback if not parsed
+  if (prizeTiers.length === 0) {
+    prizeTiers.push(
+      { name: "Arcade Trooper", left: 4837, total: 6000 },
+      { name: "Arcade Ranger", left: 3899, total: 4000 },
+      { name: "Arcade Champion", left: 2979, total: 3000 },
+      { name: "Arcade Legend", left: 2500, total: 2500 }
+    );
+  }
+
+  // Parse last refreshed date
+  const refreshRegex = /Last refreshed:\s*([^<]+)/i;
+  const refreshMatch = decoded.match(refreshRegex);
+  const lastRefreshedText = refreshMatch ? refreshMatch[1].trim() : "June 29, 2026 at 8:08 AM UTC";
 
   // Find every access code
   const codeRegex = /\b(1q-[a-z0-9-]{4,30})\b/g;
@@ -115,8 +158,22 @@ function parseArcadePage(rawHtml: string): CatalogBadge[] {
     const imgSrc = imgMatch ? imgMatch[1] : "";
 
     // ── Game page URL ─────────────────────────────────────────────────────────
-    const urlMatch = ctx.match(/href="(https:\/\/www\.skills\.google\/games\/\d+)[^"]*"/);
-    const gameUrl = urlMatch ? urlMatch[1] : "";
+    // Find the URL closest to the access code to avoid matching a preceding game's URL
+    const urlRegex = /href="(https:\/\/www\.skills\.google\/games\/\d+)[^"]*"/g;
+    let urlMatch;
+    let gameUrl = "";
+    let minDistance = Infinity;
+    while ((urlMatch = urlRegex.exec(ctx)) !== null) {
+      const url = urlMatch[1];
+      const matchPosInCtx = urlMatch.index;
+      const ctxStart = Math.max(0, pos - 1500);
+      const matchPosInDecoded = ctxStart + matchPosInCtx;
+      const distance = Math.abs(matchPosInDecoded - pos);
+      if (distance < minDistance) {
+        minDistance = distance;
+        gameUrl = url;
+      }
+    }
 
     // ── UTM campaign URL (for title resolution) ───────────────────────────────
     const campaignMatch = ctx.match(/href="(https:\/\/[^"]+utm_campaign=[^"]*)"/);
@@ -127,10 +184,6 @@ function parseArcadePage(rawHtml: string): CatalogBadge[] {
     const pts = ptsMatch ? parseInt(ptsMatch[1], 10) : 1;
 
     // ── Title ─────────────────────────────────────────────────────────────────
-    // Look for plain text patterns that appear right before or in the context:
-    //   "Arcade Voyage", "Safe Spaces", "Arcade Base Camp", etc.
-    // Strategy: extract all text segments between html tags and find the first
-    // one that looks like a proper title (3-80 chars, not pure numbers/symbols)
     let rawTitle = "";
 
     // Try h2/h3 headings in context
@@ -165,7 +218,7 @@ function parseArcadePage(rawHtml: string): CatalogBadge[] {
     });
   }
 
-  return games;
+  return { games, prizeTiers, lastRefreshedText };
 }
 
 export async function GET() {
@@ -180,13 +233,15 @@ export async function GET() {
     const rawHtml = await res.text();
     const scraped = parseArcadePage(rawHtml);
 
-    if (scraped.length > 0) {
+    if (scraped.games.length > 0) {
       return NextResponse.json(
         {
           source: "live",
-          games: scraped,
-          count: scraped.length,
+          games: scraped.games,
+          count: scraped.games.length,
           scrapedAt: new Date().toISOString(),
+          prizeTiers: scraped.prizeTiers,
+          lastRefreshedText: scraped.lastRefreshedText,
         },
         {
           headers: {
@@ -208,6 +263,13 @@ export async function GET() {
         games: active,
         count: active.length,
         scrapedAt: new Date().toISOString(),
+        prizeTiers: [
+          { name: "Arcade Trooper", left: 4837, total: 6000 },
+          { name: "Arcade Ranger", left: 3899, total: 4000 },
+          { name: "Arcade Champion", left: 2979, total: 3000 },
+          { name: "Arcade Legend", left: 2500, total: 2500 }
+        ],
+        lastRefreshedText: "June 29, 2026 at 8:08 AM UTC",
         error: err instanceof Error ? err.message : String(err),
       },
       {

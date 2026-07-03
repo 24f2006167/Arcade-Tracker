@@ -72,6 +72,37 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
+  const [liveSpots, setLiveSpots] = useState<Record<string, { left: number; total: number }>>({
+    "Arcade Trooper": { total: 6000, left: 4837 },
+    "Arcade Ranger": { total: 4000, left: 3899 },
+    "Arcade Champion": { total: 3000, left: 2979 },
+    "Arcade Legend": { total: 2500, left: 2500 },
+  });
+  const [lastRefreshedText, setLastRefreshedText] = useState<string>("June 29, 2026 at 8:08 AM UTC");
+
+  useEffect(() => {
+    async function fetchLiveTiers() {
+      try {
+        const res = await fetch("/api/arcade-games");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.prizeTiers) && data.prizeTiers.length > 0) {
+            const mapped: Record<string, { left: number; total: number }> = {};
+            data.prizeTiers.forEach((tier: { name: string; left: number; total: number }) => {
+              mapped[tier.name] = { left: tier.left, total: tier.total };
+            });
+            setLiveSpots(mapped);
+          }
+          if (data.lastRefreshedText) {
+            setLastRefreshedText(data.lastRefreshedText);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch live prize tiers", err);
+      }
+    }
+    fetchLiveTiers();
+  }, []);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/profile?id=${params.id}`);
@@ -308,15 +339,27 @@ export default function DashboardPage() {
         {/* Left col: Tier roadmap + Points System */}
         <div className="flex flex-col gap-6">
           <div className="glass-strong rounded-2xl px-6 py-6 space-y-5 rise-in">
-            <h2 className="font-display text-sm font-semibold text-mist">Swags Tier Progress</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <h2 className="font-display text-sm font-semibold text-mist">Swags Tier Progress</h2>
+              {lastRefreshedText && (
+                <span className="text-[10px] text-mist-muted sm:text-right">
+                  Refreshed: {lastRefreshedText}
+                </span>
+              )}
+            </div>
             <div className="space-y-4">
               {updatedTiers.map((tier) => {
-                const spots = {
-                  "Arcade Trooper": { total: 6000, left: 4837 },
-                  "Arcade Ranger": { total: 4000, left: 3899 },
-                  "Arcade Champion": { total: 3000, left: 2979 },
-                  "Arcade Legend": { total: 2500, left: 2500 },
-                }[tier.name];
+                const spots = liveSpots[tier.name];
+                const baseLimits: Record<string, number> = {
+                  "Arcade Trooper": 5000,
+                  "Arcade Ranger": 3000,
+                  "Arcade Champion": 2000,
+                  "Arcade Legend": 2000,
+                };
+                const base = baseLimits[tier.name] || 0;
+                const increase = spots ? spots.total - base : 0;
+                const filledCount = spots ? spots.total - spots.left : 0;
+                const filledPct = spots ? Math.round((filledCount / spots.total) * 100) : 0;
 
                 return (
                   <div key={tier.name} className="space-y-1.5">
@@ -344,11 +387,25 @@ export default function DashboardPage() {
                       />
                     </div>
                     {spots && (
-                      <div className="flex items-center justify-between text-[10px] text-mist-muted pt-0.5">
-                        <span>Prize spots remaining:</span>
-                        <span className="font-semibold text-mist">
-                          {spots.left.toLocaleString()} / {spots.total.toLocaleString()}
-                        </span>
+                      <div className="space-y-1 pt-1 border-t border-white/5 mt-1.5">
+                        <div className="flex items-center justify-between text-[10px] text-mist-muted">
+                          <span>Prize spots remaining:</span>
+                          <span className="font-semibold text-mist">
+                            {spots.left.toLocaleString()} / {spots.total.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-mist-muted">
+                          <span>Spots filled:</span>
+                          <span className="font-semibold text-mist text-[10px]">
+                            {filledCount.toLocaleString()} ({filledPct}% filled)
+                          </span>
+                        </div>
+                        <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-0.5">
+                          <div
+                            className="h-full bg-gradient-to-r from-pink/50 to-violet/50 rounded-full transition-all duration-500"
+                            style={{ width: `${filledPct}%` }}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -514,10 +571,20 @@ export default function DashboardPage() {
       {/* ── Facilitator Program Milestones ──────────────────────────────── */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-sm font-semibold text-mist">
-            Facilitator Program Milestones
-          </h2>
-          <span className="text-[11px] text-mist-muted flex items-center gap-1.5">
+          <div className="space-y-0.5">
+            <h2 className="font-display text-sm font-semibold text-mist">
+              Facilitator Program Milestones
+            </h2>
+            <a
+              href="https://rsvp.withgoogle.com/events/arcade-facilitator/home"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-cyan hover:underline flex items-center gap-1"
+            >
+              Official Program Page →
+            </a>
+          </div>
+          <span className="text-[11px] text-mist-muted flex items-center gap-1.5 shrink-0 self-start">
             <Calendar className="w-3 h-3" />
             13 Jul – 14 Sep 2026
           </span>

@@ -33,7 +33,17 @@ export function SeasonCountdown() {
         ) : (
           <Calendar className="w-4 h-4 text-violet" />
         )}
-        <span className="text-xs text-mist-muted">{label}</span>
+        <div className="flex flex-col">
+          <span className="text-xs text-mist-muted">{label}</span>
+          <a
+            href="https://rsvp.withgoogle.com/events/arcade-facilitator/home"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[9px] text-cyan hover:underline mt-0.5"
+          >
+            Official Program Website →
+          </a>
+        </div>
       </div>
       {!countdown.expired && (
         <div className="flex items-center gap-3 font-score text-[11px] text-mist">
