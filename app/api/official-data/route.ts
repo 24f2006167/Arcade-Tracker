@@ -140,7 +140,7 @@ async function buildOfficialData(): Promise<OfficialData> {
     tiers: OFFICIAL_TIERS,
     announcements: allAnnouncements,
     facilitatorProgram: {
-      startDate: "2026-07-13T00:00:00Z",
+      startDate: "2026-07-13T11:30:00Z",
       endDate: "2026-09-14T23:59:59Z",
       officialLink: "https://rsvp.withgoogle.com/events/arcade-facilitator/home",
     },

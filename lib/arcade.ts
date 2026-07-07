@@ -7,8 +7,8 @@ import type { Badge } from "@/lib/scraper";
  */
 export const SEASON = {
   name: "Google Skills Arcade 2026",
-  registrationOpens: "2026-07-13T00:00:00Z",
-  facilitatorStarts: "2026-07-13T00:00:00Z",
+  registrationOpens: "2026-07-13T11:30:00Z",
+  facilitatorStarts: "2026-07-13T11:30:00Z",
   facilitatorEnds: "2026-09-14T23:59:59Z",
 };
 
