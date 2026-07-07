@@ -127,7 +127,7 @@ export function AccountSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0c0a1a] border border-white/10 shadow-2xl p-4 space-y-3.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-2xl bg-[#0c0a1a] border border-white/10 shadow-2xl p-4 space-y-3.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
           {activeProfile && (
             <div className="space-y-1 pb-2 border-b border-white/5">
               <p className="text-[10px] text-mist-muted font-medium uppercase tracking-wider">Active Account</p>

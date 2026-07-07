@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Press_Start_2P } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
 import BackgroundEffects from "@/components/BackgroundEffects";
 import HackerBootWrapper from "@/components/HackerBootWrapper";
@@ -50,7 +49,7 @@ export const metadata: Metadata = {
   },
 };
 
-import { AccountSwitcher, DashboardNavLink, SimulatorNavLink, AddProfileNavLink } from "@/components/AccountSwitcher";
+import NavBar from "@/components/NavBar";
 import VoiceAgent from "@/components/VoiceAgent"; // EXPERIMENTAL — remove if not keeping
 
 export default function RootLayout({
@@ -75,34 +74,9 @@ export default function RootLayout({
         <BackgroundEffects />
         <HackerBootWrapper />
 
+        <NavBar />
 
-        <nav className="sticky top-0 z-50 glass border-b border-line/60">
-          <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <img
-                src="https://avatars.githubusercontent.com/u/117688092?v=4"
-                alt="STS Logo"
-                className="w-6 h-6 rounded-md object-contain border border-white/10 group-hover:scale-105 transition-transform"
-              />
-              <span className="font-display font-semibold text-sm tracking-tight text-mist">
-                STS Arcade Tracker
-              </span>
-            </Link>
-            <div className="flex items-center gap-5 sm:gap-6 text-sm text-mist-muted">
-              <AddProfileNavLink />
-              <DashboardNavLink />
-              <SimulatorNavLink />
-              <Link href="/leaderboard" className="hover:text-pink transition-colors">
-                Leaderboard
-              </Link>
-              <Link href="/announcements" className="hover:text-violet transition-colors">
-                Announcements
-              </Link>
-              <AccountSwitcher />
-            </div>
-          </div>
-        </nav>
-        <main className="mx-auto max-w-6xl px-6 overflow-x-hidden">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 sm:px-6 overflow-x-hidden">{children}</main>
 
         {/* EXPERIMENTAL: Voice Agent — remove the line below + VoiceAgent.tsx to revert */}
         <VoiceAgent />

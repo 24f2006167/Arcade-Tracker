@@ -5,8 +5,9 @@ import Link from "next/link";
 import {
   ArrowRight, Gamepad2, Trophy, Zap, Star, CheckCircle2,
   Clock, Users, Target, ChevronRight, Sparkles, Shield,
-  TrendingUp, Medal, Flame,
+  TrendingUp, Medal, Flame, BadgeCheck, ExternalLink,
 } from "lucide-react";
+
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { ARCADE_GAMES } from "@/lib/catalog";
 import type { CatalogBadge } from "@/lib/catalog";
@@ -50,6 +51,42 @@ function useActiveGames() {
 
   return games;
 }
+
+// ─── Latest official announcement hook ────────────────────────────────────────
+interface LatestAnnouncement {
+  id: string;
+  title: string;
+  summary?: string;
+  officialLink?: string;
+  publishedAt?: string;
+  author?: string;
+  imageUrl?: string;
+}
+
+function useLatestAnnouncement() {
+  const [item, setItem] = useState<LatestAnnouncement | null>(null);
+  useEffect(() => {
+    fetch("/api/official-data")
+      .then((r) => r.json())
+      .then((d) => {
+        const ann = d?.announcements?.[0];
+        if (ann) {
+          setItem({
+            id: ann.id,
+            title: ann.title,
+            summary: ann.summary,
+            officialLink: ann.officialLink || ann.official_link,
+            publishedAt: ann.publishedAt || ann.published_at,
+            author: ann.author,
+            imageUrl: ann.imageUrl || ann.image_url,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+  return item;
+}
+
 
 
 // ─── Animated counter ─────────────────────────────────────────────────────────
@@ -209,10 +246,54 @@ const FEATURES = [
   },
 ];
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Latest from Google card ──────────────────────────────────────────────────
+function LatestFromGoogle({ item }: { item: LatestAnnouncement }) {
+  return (
+    <a
+      href={item.officialLink ?? "https://discuss.google.dev/t/google-skills-arcade-2026-tiers/371066"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <div className="glass rounded-2xl border border-blue-400/20 hover:border-blue-400/40 px-5 py-4 flex items-start gap-4 transition-all hover:-translate-y-0.5">
+        {/* Google badge avatar */}
+        <div className="w-9 h-9 rounded-xl bg-blue-500/20 ring-1 ring-blue-400/30 flex items-center justify-center shrink-0">
+          <BadgeCheck className="w-5 h-5 text-blue-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[10px] bg-blue-500/15 text-blue-300 border border-blue-400/20 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+              <BadgeCheck className="w-2.5 h-2.5" />
+              Google Official
+            </span>
+            {item.author && (
+              <span className="text-[10px] text-mist-muted">by {item.author}</span>
+            )}
+            {item.publishedAt && (
+              <span className="text-[10px] text-mist-muted">
+                {new Date(item.publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+              </span>
+            )}
+          </div>
+          <p className="text-mist text-sm font-semibold leading-snug group-hover:text-white transition-colors">
+            {item.title}
+          </p>
+          {item.summary && (
+            <p className="text-mist-muted text-xs mt-1 line-clamp-2 leading-relaxed">
+              {item.summary}
+            </p>
+          )}
+        </div>
+        <ExternalLink className="w-4 h-4 text-mist-muted shrink-0 mt-0.5 group-hover:text-mist transition-colors" />
+      </div>
+    </a>
+  );
+}
+
 export default function Home() {
   const reduced = useReducedMotion() ?? false;
   const activeGames = useActiveGames();
+  const latestAnnouncement = useLatestAnnouncement();
   const heroRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -298,7 +379,7 @@ export default function Home() {
             {[
               { icon: Gamepad2, label: "Active games", val: `${activeGames.length}` },
               { icon: CheckCircle2, label: "Arcade points each", val: "1 PT" },
-              { icon: Medal, label: "Season ends", val: "Jul 31" },
+              { icon: Medal, label: "Facilitator starts", val: "Jul 13" },
               { icon: Star, label: "Free to track", val: "100%" },
             ].map(({ icon: Icon, label, val }) => (
               <div key={label} className="flex items-center gap-1.5">
@@ -308,8 +389,22 @@ export default function Home() {
               </div>
             ))}
           </motion.div>
+
+          {/* Latest from Google — live feed */}
+          {latestAnnouncement && (
+            <motion.div
+              initial={reduced ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: EASE, delay: 0.45 }}
+              className="w-full max-w-2xl"
+            >
+              <p className="text-[10px] uppercase tracking-widest text-mist-muted mb-2 text-center">Latest from Google</p>
+              <LatestFromGoogle item={latestAnnouncement} />
+            </motion.div>
+          )}
         </div>
       </section>
+
 
       {/* ══ ACTIVE GAMES ═══════════════════════════════════════════════════════ */}
       <section className="max-w-6xl mx-auto px-6 md:px-12 py-12">

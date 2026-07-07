@@ -100,6 +100,14 @@ export interface PointValues {
 export interface TierConfig {
   name: string;
   points: number;
+  /** Upper bound for this tier (points < next tier threshold). Undefined for the highest tier. */
+  pointsMax?: number;
+  /**
+   * Official maximum prize spots for this tier — from Yugali (Google PM) June 10 2026 post:
+   * Legend 2500, Champion 3000, Ranger 4000, Trooper 6000.
+   * Waterfall: if a tier fills up you roll down to the next tier below.
+   */
+  spotsAvailable?: number;
 }
 
 export interface MilestoneConfig {
@@ -230,10 +238,12 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
   },
 
   tiers: [
-    { name: "Arcade Trooper", points: 50 },
-    { name: "Arcade Ranger", points: 75 },
-    { name: "Arcade Champion", points: 95 },
-    { name: "Arcade Legend", points: 120 },
+    // Official spot limits confirmed by Yugali (Google PM) — discuss.google.dev June 10 2026
+    // Waterfall system: if a tier fills up, eligible players roll down to the tier below.
+    { name: "Arcade Trooper",  points: 50,  pointsMax: 74,  spotsAvailable: 6000 },
+    { name: "Arcade Ranger",   points: 75,  pointsMax: 94,  spotsAvailable: 4000 },
+    { name: "Arcade Champion", points: 95,  pointsMax: 119, spotsAvailable: 3000 },
+    { name: "Arcade Legend",   points: 120, spotsAvailable: 2500 },
   ],
 
   milestones: [
@@ -383,6 +393,11 @@ export interface TierResult extends TierConfig {
   current: boolean;
   pointsToGo: number;
   pct: number;
+  /**
+   * Waterfall: if this tier's spot pool fills up, players roll down to the
+   * next tier below. First-come first-served starting from Legend tier.
+   */
+  waterfallNote?: string;
 }
 
 export interface SwagEligibility {
