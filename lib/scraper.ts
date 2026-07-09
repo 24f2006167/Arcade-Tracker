@@ -204,11 +204,7 @@ To earn an EXTRA 10 Bonus points:
   for (const b of userBadges) {
     if (!b.title) continue;
     const lowerTitle = b.title.toLowerCase();
-    if (
-      lowerTitle.includes("certification") || 
-      lowerTitle.includes("certified") ||
-      targetBadges.some(tb => lowerTitle.includes(tb))
-    ) {
+    if (targetBadges.some(tb => lowerTitle.includes(tb))) {
       completed = true;
       completedBadgeTitle = b.title;
       break;

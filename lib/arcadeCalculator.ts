@@ -617,11 +617,20 @@ export function calculateArcadeResult(
     milestoneBonus = highest.bonusPoints;
   }
 
-  // Bonus milestone points (10 pts) - only active if they completed it AND achieved at least Milestone 1
-  const isBonusMilestoneEligible = achievedMilestones.length > 0;
-  const hasCertification = classifiedBadges.some(b => b.category === "certification");
-  const isBonusMilestoneCompleted = bonusMilestoneCompleted ?? hasCertification;
-  const bonusMilestonePoints = (isBonusMilestoneEligible && isBonusMilestoneCompleted) ? 10 : 0;
+  // Bonus milestone points (10 pts)
+  const targetGearBadges = [
+    "gear",
+    "create your first gemini enterprise application",
+    "engineer ai agents with agent development kit",
+    "deploy multi-agent architectures",
+    "orchestrate multi-agent workflows with gemini enterprise"
+  ];
+  const hasGearBadge = classifiedBadges.some(b => {
+    const title = b.title.toLowerCase();
+    return targetGearBadges.some(tb => title.includes(tb));
+  });
+  const isBonusMilestoneCompleted = bonusMilestoneCompleted ?? hasGearBadge;
+  const bonusMilestonePoints = isBonusMilestoneCompleted ? 10 : 0;
 
   const bonusPoints = milestoneBonus + bonusMilestonePoints;
   const totalArcadePoints = basePoints + bonusPoints;
