@@ -19,6 +19,8 @@ interface Announcement {
   author_url?: string;
   is_google_official?: boolean;
   image_url?: string;
+  tag?: string;
+  tagColor?: string;
 }
 
 interface TierInfo {
@@ -217,76 +219,89 @@ function TierSpotsGrid({ tiers, waterfallSystem }: { tiers: TierInfo[]; waterfal
 // ── Announcement card ─────────────────────────────────────────────────────────
 function AnnouncementCard({ announcement, index, featured = false }: { announcement: Announcement; index: number; featured?: boolean }) {
   const isOfficial = announcement.is_google_official || announcement.source === "yugali-official";
+  const tag = announcement.tag || (isOfficial ? "Official" : "Update");
+  const tagColor = announcement.tagColor || "#60a5fa";
+
+  // Format date nicely
+  const dateStr = announcement.published_at
+    ? new Date(announcement.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "";
 
   return (
-    <a
-      href={announcement.official_link || "#"}
-      target={announcement.official_link ? "_blank" : undefined}
-      rel="noreferrer"
-      className={`group block glass rounded-2xl overflow-hidden border transition-all hover:-translate-y-1 hover:shadow-xl rise-in ${
-        featured ? "border-blue-400/25 hover:border-blue-400/50 hover:shadow-blue-400/10" : "border-white/5 hover:border-white/15"
+    <div
+      className={`group glass rounded-2xl overflow-hidden border transition-all hover:-translate-y-0.5 hover:shadow-xl rise-in ${
+        featured
+          ? "border-blue-400/25 hover:border-blue-400/40 hover:shadow-blue-400/10"
+          : "border-white/8 hover:border-white/20"
       }`}
-      style={{ animationDelay: `${index * 0.05}s` }}
+      style={{ animationDelay: `${index * 0.06}s` }}
     >
       {/* Featured image */}
       {featured && announcement.image_url && (
-        <div className="relative h-36 overflow-hidden bg-gradient-to-br from-void to-slate-900">
+        <div className="relative h-40 overflow-hidden bg-gradient-to-br from-void to-slate-900">
           <img
             src={announcement.image_url}
             alt="Announcement preview"
-            className="w-full h-full object-cover object-top opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500"
+            className="w-full h-full object-cover object-top opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
             onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = "none"; }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          {isOfficial && (
-            <div className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] bg-blue-500/90 text-white border border-blue-400/50 px-2 py-1 rounded-full font-bold backdrop-blur-sm">
-              <BadgeCheck className="w-3 h-3" /> Google Official
-            </div>
-          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
         </div>
       )}
 
-      <div className="p-4 flex items-start gap-3">
-        {/* Icon */}
-        {!featured && (
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isOfficial ? "bg-blue-500/20 ring-1 ring-blue-400/30" : "bg-violet/15"}`}>
-            {isOfficial ? <BadgeCheck className="w-5 h-5 text-blue-400" /> : <Megaphone className="w-4 h-4 text-violet" />}
-          </div>
-        )}
-
-        <div className="flex-1 min-w-0">
-          {/* Meta row */}
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            {!featured && isOfficial && (
-              <span className="inline-flex items-center gap-1 text-[10px] bg-blue-500/15 text-blue-300 border border-blue-400/20 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-                <BadgeCheck className="w-2.5 h-2.5" /> Google Official
-              </span>
-            )}
-            {announcement.author && (
-              <span className="text-[10px] text-mist-muted">by <span className={isOfficial ? "text-blue-300 font-medium" : ""}>{announcement.author}</span></span>
-            )}
-            {announcement.published_at && (
-              <span className="text-[10px] text-mist-muted flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" />
-                {new Date(announcement.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-              </span>
-            )}
-          </div>
-
-          <p className={`font-semibold leading-snug group-hover:text-white transition-colors ${featured ? "text-base text-mist" : "text-sm text-mist"}`}>
-            {announcement.title}
-          </p>
-
-          {announcement.summary && (
-            <p className={`text-mist-muted mt-1 leading-relaxed line-clamp-3 ${featured ? "text-xs" : "text-xs"}`}>
-              {announcement.summary}
-            </p>
+      {/* Card body */}
+      <div className="p-4 space-y-3">
+        {/* Top row: badges + date */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {isOfficial && (
+            <span className="inline-flex items-center gap-1 text-[10px] bg-blue-500/15 text-blue-300 border border-blue-400/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <BadgeCheck className="w-2.5 h-2.5" /> Google Official
+            </span>
           )}
+          {/* Category tag */}
+          <span
+            className="text-[10px] px-2 py-0.5 rounded-full font-semibold border"
+            style={{ color: tagColor, borderColor: tagColor + "40", backgroundColor: tagColor + "15" }}
+          >
+            {tag}
+          </span>
+          <span className="ml-auto text-[10px] text-mist-muted flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5" /> {dateStr}
+          </span>
         </div>
 
-        <ArrowUpRight className="w-4 h-4 text-mist-muted shrink-0 mt-0.5 group-hover:text-mist transition-colors" />
+        {/* Title */}
+        <h3 className="text-sm font-bold text-mist group-hover:text-white transition-colors leading-snug">
+          {announcement.title}
+        </h3>
+
+        {/* Full summary — NOT truncated, shows the actual post content */}
+        {announcement.summary && (
+          <p className="text-[11px] text-mist-muted leading-relaxed">
+            {announcement.summary}
+          </p>
+        )}
+
+        {/* Author + Read More */}
+        <div className="flex items-center justify-between pt-1 border-t border-white/5">
+          <span className="text-[10px] text-mist-muted">
+            ✍️ <span className={isOfficial ? "text-blue-300" : ""}>Yugali Mohite</span>
+            <span className="text-mist/40 ml-1">(Google PM)</span>
+          </span>
+          {announcement.official_link && (
+            <a
+              href={announcement.official_link}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all hover:scale-105"
+              style={{ color: tagColor, borderColor: tagColor + "40", backgroundColor: tagColor + "10" }}
+            >
+              Read full post <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          )}
+        </div>
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -494,12 +509,32 @@ export default function AnnouncementsPage() {
   const loadData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [announcementsRes, officialRes] = await Promise.allSettled([
-        fetch("/api/announcements").then((r) => r.json()),
-        fetch("/api/official-data").then((r) => r.json()),
-      ]);
-      if (announcementsRes.status === "fulfilled") setItems(announcementsRes.value.announcements ?? []);
-      if (officialRes.status === "fulfilled") setOfficialData(officialRes.value);
+      // Primary: rich official data with all Yugali posts (Jul 3 "InFocus", Jun 10 Tiers, etc.)
+      const officialRes = await fetch("/api/official-data").then((r) => r.json());
+      if (officialRes?.announcements) {
+        setOfficialData(officialRes);
+        // Map camelCase API fields to snake_case interface fields
+        const mapped: Announcement[] = (officialRes.announcements as Array<{
+          id: string; title: string; summary?: string; officialLink?: string;
+          publishedAt?: string; source?: string; author?: string;
+          authorUrl?: string; isGoogleOfficial?: boolean; imageUrl?: string;
+          tag?: string; tagColor?: string;
+        }>).map((a) => ({
+          id: a.id,
+          title: a.title,
+          summary: a.summary,
+          official_link: a.officialLink,
+          published_at: a.publishedAt,
+          source: a.source,
+          author: a.author,
+          author_url: a.authorUrl,
+          is_google_official: a.isGoogleOfficial,
+          image_url: a.imageUrl,
+          tag: a.tag,
+          tagColor: a.tagColor,
+        }));
+        setItems(mapped);
+      }
       setLastRefreshed(new Date().toLocaleTimeString());
     } finally {
       setIsRefreshing(false);
