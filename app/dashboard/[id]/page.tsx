@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX } from "lucide-react";
+import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX, Check } from "lucide-react";
 import { ScoreboardStrip } from "@/components/ScoreboardStrip";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { IncompleteBadges } from "@/components/IncompleteBadges";
@@ -510,24 +510,35 @@ export default function DashboardPage() {
           <div className="glass-strong rounded-2xl px-6 py-5 space-y-4 rise-in">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-sm font-semibold text-mist">Bonus Milestone 🏆</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-violet/20 text-violet border border-violet/30">
-                +10 pts · Not Yet Announced
-              </span>
+              {data?.bonusMilestone?.completed ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  +10 pts · Completed
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-violet/20 text-violet border border-violet/30">
+                  +10 pts · Active
+                </span>
+              )}
             </div>
             
-            <div className="flex items-start gap-3.5 bg-white/5 rounded-xl p-3 border border-violet/20">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-violet/10 border border-violet/20 text-violet">
-                <Gamepad2 className="w-5 h-5" />
+            <div className={`flex items-start gap-3.5 bg-white/5 rounded-xl p-3 border ${data?.bonusMilestone?.completed ? "border-emerald-500/20" : "border-violet/20"}`}>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${data?.bonusMilestone?.completed ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-violet/10 border border-violet/20 text-violet"}`}>
+                {data?.bonusMilestone?.completed ? <Check className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] font-medium text-mist">
-                  Task not yet announced
+                <p className="text-[11px] font-semibold text-mist">
+                  {data?.bonusMilestone?.completed ? "GEAR / AI Agent Challenge Completed!" : "Build an AI Agent & Complete GEAR Badges"}
                 </p>
-                <p className="text-[10px] text-mist-muted leading-relaxed">
-                  For the first time, there is more than one way to earn Bonus Points. More details about the new "Bonus Milestone", its eligibility criteria and how to earn an extra{" "}
-                  <span className="text-amber font-semibold">10 Bonus Points</span>{" "}
-                  will be posted on the official page soon. Stay tuned!
-                </p>
+                {data?.bonusMilestone?.completed ? (
+                  <p className="text-[10px] text-mist-muted leading-relaxed">
+                    Congratulations! You successfully completed the Bonus Milestone and unlocked <span className="text-emerald-400 font-semibold">10 extra bonus points</span>. 
+                    Verified by badge: <span className="text-emerald-400 font-medium">{data.bonusMilestone.completedBadgeTitle}</span>.
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-mist-muted leading-relaxed whitespace-pre-line">
+                    Build your first Vertex AI agent, set up GC Free Trial Billing, complete any of the 4 GEAR Skill Badges, and submit your project details to earn an extra <span className="text-amber font-semibold">10 Bonus Points</span>!
+                  </p>
+                )}
               </div>
             </div>
 

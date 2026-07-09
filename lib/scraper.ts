@@ -178,39 +178,36 @@ export interface BonusMilestoneInfo {
 }
 
 export async function fetchBonusMilestoneInfo(userBadges: { title: string }[]): Promise<BonusMilestoneInfo> {
-  let description = "";
-  try {
-    const res = await fetch("https://rsvp.withgoogle.com/events/arcade-facilitator/bonus-milestone", {
-      headers: FETCH_HEADERS,
-      next: { revalidate: 3600 }
-    });
-    if (!res.ok) throw new Error("Fetch failed");
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    const paragraphs: string[] = [];
-    $("p").each((_, el) => {
-      const text = $(el).text().trim();
-      if (text) paragraphs.push(text);
-    });
-    description = paragraphs.join("\n\n");
-  } catch (err) {
-    description = "More details about the new \"Bonus Milestone\", its eligibility criteria and how will you be able to earn an extra 10 Bonus Points will be posted here soon. So please stay tuned and keep an eye out here!";
-  }
+  const description = `Introducing the Bonus Milestone 🏆
 
-  if (!description || description.trim().length === 0) {
-    description = "For the first time ever, there is more than one way to earn \"Bonus Points\" in the Arcade Facilitator program and this time we want to make sure that you actually step away with some industry-ready skills after completing this.\n\nMore details about the new \"Bonus Milestone\", its eligibility criteria and how will you be able to earn an extra 10 Bonus Points will be posted here soon.\n\nSo please stay tuned and keep an eye out here!";
-  }
+For the first time ever, there is more than one way to earn "Bonus Points" in the Arcade Facilitator program and this time we want to make sure that you actually step away with some industry-ready skills after completing this and even create your FIRST AI Agent.
 
-  // Heuristic matching: search for any of the user's completed badges in the page description
-  // OR check if they have completed any "Certification" or "Certified" badge representing industry-ready skills
+To earn an EXTRA 10 Bonus points:
+1. Complete the 4 GEAR Skill Badges on Google Cloud Skills Boost:
+   - Create Your First Gemini Enterprise Application
+   - Engineer AI Agents with Agent Development Kit (ADK)
+   - Deploy Multi-Agent Architectures
+   - Orchestrate Multi-agent Workflows with Gemini Enterprise
+2. Setup Google Cloud Free Trial Billing (with $300 credits for 90 days if not already set up).
+3. Build your first AI Agent using Vertex AI (Agent Platform) and grant permission to the verifier email address.
+4. Submit project details (Unique Project Name and Unique Billing ID) for verification.`;
+
   let completed = false;
   let completedBadgeTitle = "";
+  const targetBadges = [
+    "gear",
+    "create your first gemini enterprise application",
+    "engineer ai agents with agent development kit",
+    "deploy multi-agent architectures",
+    "orchestrate multi-agent workflows with gemini enterprise"
+  ];
   for (const b of userBadges) {
     if (!b.title) continue;
     const lowerTitle = b.title.toLowerCase();
     if (
-      (lowerTitle.includes("certification") || lowerTitle.includes("certified")) ||
-      (description.length > 50 && lowerTitle.length > 5 && description.toLowerCase().includes(lowerTitle))
+      lowerTitle.includes("certification") || 
+      lowerTitle.includes("certified") ||
+      targetBadges.some(tb => lowerTitle.includes(tb))
     ) {
       completed = true;
       completedBadgeTitle = b.title;
