@@ -216,6 +216,82 @@ function TierSpotsGrid({ tiers, waterfallSystem }: { tiers: TierInfo[]; waterfal
   );
 }
 
+// ── Featured Announcement card ──────────────────────────────────────────────────
+function FeaturedPostCard({ announcement, rank }: { announcement: Announcement; rank: number }) {
+  const isOfficial = announcement.is_google_official || announcement.source === "yugali-official";
+  const tag = announcement.tag || (isOfficial ? "Official" : "Update");
+  const tagColor = announcement.tagColor || "#60a5fa";
+
+  const dateStr = announcement.published_at
+    ? new Date(announcement.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "";
+
+  return (
+    <div className="group glass rounded-2xl overflow-hidden border border-blue-400/30 hover:border-blue-400/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 relative rise-in">
+      <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-violet" />
+      <div className="p-6 space-y-4">
+        {/* Top row: tags, latest indicator and date */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1 text-[10px] bg-gradient-to-r from-blue-500 to-violet text-white px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
+            🔥 Latest Announcement
+          </span>
+          {isOfficial && (
+            <span className="inline-flex items-center gap-1 text-[10px] bg-blue-500/15 text-blue-300 border border-blue-400/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <BadgeCheck className="w-2.5 h-2.5" /> Google Official
+            </span>
+          )}
+          <span
+            className="text-[10px] px-2 py-0.5 rounded-full font-semibold border"
+            style={{ color: tagColor, borderColor: tagColor + "40", backgroundColor: tagColor + "15" }}
+          >
+            {tag}
+          </span>
+          <span className="ml-auto text-[10px] text-mist-muted flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5" /> {dateStr}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-base font-bold text-mist group-hover:text-white transition-colors leading-snug">
+          {announcement.title}
+        </h2>
+
+        {/* Message visual container */}
+        <div className="rounded-xl bg-white/5 border border-white/5 p-4 relative overflow-hidden">
+          <div className="absolute right-3 top-3 text-white/5 pointer-events-none select-none text-7xl font-serif">“</div>
+          <p className="text-xs text-mist-muted leading-relaxed relative z-10 whitespace-pre-line">
+            {announcement.summary}
+          </p>
+        </div>
+
+        {/* Footer info */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-300 border border-blue-400/30">
+              YM
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-blue-300">Yugali Mohite</span>
+              <span className="text-[8px] text-mist-muted">Google Program Manager</span>
+            </div>
+          </div>
+          {announcement.official_link && (
+            <a
+              href={announcement.official_link}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all hover:scale-105"
+              style={{ color: tagColor, borderColor: tagColor + "40", backgroundColor: tagColor + "10" }}
+            >
+              Read full post <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Announcement card ─────────────────────────────────────────────────────────
 function AnnouncementCard({ announcement, index, featured = false }: { announcement: Announcement; index: number; featured?: boolean }) {
   const isOfficial = announcement.is_google_official || announcement.source === "yugali-official";
@@ -626,32 +702,31 @@ export default function AnnouncementsPage() {
             <span className="text-[10px] text-mist-muted">(auto-fetched from discuss.google.dev)</span>
           </div>
 
+          {/* Top 3 latest posts — visual layout */}
+          {items && items.length > 0 && (() => {
+            const top3 = items.slice(0, 3);
+            const [first, ...others] = top3;
+            return (
+              <div className="space-y-4">
+                {/* #1 — Latest post: full-width featured card */}
+                {first && <FeaturedPostCard announcement={first} rank={1} />}
+                {/* #2 + #3 — side by side */}
+                {others.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {others.map((a, i) => (
+                      <AnnouncementCard key={a.id} announcement={a} index={i + 1} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {!items && (
             <div className="glass rounded-2xl flex items-center justify-center gap-2 py-16 text-mist-muted text-sm animate-pulse">
               <RefreshCw className="w-4 h-4 animate-spin" /> Fetching from discuss.google.dev…
             </div>
           )}
-
-          {items && items.length === 0 && (
-            <div className="glass rounded-2xl p-12 text-center text-mist-muted text-sm">
-              No announcements yet.
-            </div>
-          )}
-
-          {featured && <AnnouncementCard announcement={featured} index={0} featured />}
-
-          {rest.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {rest.map((a, i) => (
-                <AnnouncementCard key={a.id} announcement={a} index={i + 1} />
-              ))}
-            </div>
-          )}
-
-          {/* Bonus Milestone empty state filler */}
-          <div className="mt-6">
-            <BonusMilestonePreview />
-          </div>
         </div>
 
         {/* RIGHT: Countdown and Prize counter */}

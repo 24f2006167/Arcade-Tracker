@@ -110,7 +110,7 @@ async function fetchAllYugaliPosts(): Promise<OfficialAnnouncement[]> {
   });
 
   // Fetch full content for the top 8 most recent (to keep it fast)
-  const top = relevant.slice(0, 8);
+  const top = relevant.slice(0, 3);
   const announcements: OfficialAnnouncement[] = [];
 
   await Promise.all(
@@ -122,7 +122,7 @@ async function fetchAllYugaliPosts(): Promise<OfficialAnnouncement[]> {
       let summary = "";
       if (fullPost?.cooked) {
         const text = stripHtml(fullPost.cooked);
-        summary = text.slice(0, 400) + (text.length > 400 ? "…" : "");
+        summary = text.slice(0, 600) + (text.length > 600 ? "…" : "");
       } else if (action.excerpt) {
         summary = stripHtml(action.excerpt);
       }
