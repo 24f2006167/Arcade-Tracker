@@ -90,6 +90,12 @@ export default function NavBar() {
           >
             Announcements
           </Link>
+          <Link
+            href="/facilitator-guide"
+            className="hover:text-cyan transition-colors whitespace-nowrap"
+          >
+            Prep Guide
+          </Link>
           <AccountSwitcher />
         </div>
 
@@ -129,6 +135,9 @@ export default function NavBar() {
           </NavDrawerLink>
           <NavDrawerLink href="/announcements" onClick={close} accent="violet">
             Announcements
+          </NavDrawerLink>
+          <NavDrawerLink href="/facilitator-guide" onClick={close} accent="cyan">
+            Prep Guide
           </NavDrawerLink>
 
           {/* Account switcher — full width variant */}
