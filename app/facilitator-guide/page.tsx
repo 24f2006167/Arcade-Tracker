@@ -51,45 +51,44 @@ const CHAPTERS: Chapter[] = [
   {
     id: "chapter-2",
     stepNumber: 2,
-    title: "Claim Promo Code & Catalog Link",
-    shortDesc: "Use your facilitator's exclusive link and copy the promo code.",
+    title: "Claim Promo Code (Sign In AFTER)",
+    shortDesc: "Open the promo link first, then sign in to receive your initial 9 credits.",
     duration: "2:15",
     detailedSteps: [
       "Obtain the unique promotion link and code from your Arcade Facilitator's video description or message.",
       "Copy the promotion code directly to your clipboard.",
       "Open the facilitator's catalog promotion link in a new tab.",
-      "Paste the promo code into the input field on the landing page and click 'Submit'.",
-      "Sign in to your Google Cloud Skills Boost account when prompted."
+      "Sign in to your Google Cloud Skills Boost account ONLY AFTER opening the promo page.",
+      "Verify that you receive 9 credits immediately. (Note: If you do not see 9 credits, the promo code has expired)."
     ],
     visualType: "promo",
   },
   {
     id: "chapter-3",
     stepNumber: 3,
-    title: "The 7-Minute Hands-On Lab Hack",
-    shortDesc: "Launch a hands-on lab and let it run to trigger your free membership.",
+    title: "Start a Free Hands-On Lab",
+    shortDesc: "Launch a 'No Cost' hands-on lab and let it run to trigger your free membership.",
     duration: "3:45",
     detailedSteps: [
-      "After signing in, search for or open any hands-on lab (e.g., 'A Tour of Google Cloud Hands-on Labs').",
-      "Click the green 'Start Lab' button to initiate the sandbox.",
-      "Crucial Step: Do not end the lab immediately! You must keep the lab running and active.",
-      "Wait at least 7 to 8 minutes (we recommend setting a timer for 8 minutes).",
-      "After the timer completes, click the red 'End Lab' button and leave a rating."
+      "Search the catalog for any hands-on lab (e.g. 'A Tour of Google Cloud Hands-on Labs').",
+      "Look for the 'No Cost' label so that starting the lab does not consume your credits.",
+      "Click the green 'Start Lab' button. There should be no popups asking for credits.",
+      "Crucial Step: Let the lab run active for at least 3 to 5 minutes (5 minutes is recommended).",
+      "After the timer passes 5 minutes, click the red 'End Lab' button."
     ],
     visualType: "lab",
   },
   {
     id: "chapter-4",
     stepNumber: 4,
-    title: "Refresh & Confirm 400 Credits",
-    shortDesc: "Verify your Starter subscription and confirm your free credits.",
+    title: "Refresh & Confirm (DO NOT Start Badges Yet)",
+    shortDesc: "Confirm your 400 free credits and review critical Facilitator rules.",
     duration: "1:50",
     detailedSteps: [
-      "Click on your profile avatar in the top-right corner.",
-      "Confirm that your subscription shows 'Starter' status (initially with around 9 credits).",
-      "Wait for 5 minutes to let the Google systems process your new credit balance.",
-      "Refresh your browser page.",
-      "Verify that your credit balance has updated to 400+ credits! You are now set to complete Skill Badges for free."
+      "Click on your profile avatar in the top-right corner to check credits.",
+      "If you don't see 400 credits right away, refresh the browser page 2 to 3 times.",
+      "Verify that your credit balance has updated to 400+ credits and subscription shows Starter.",
+      "CRITICAL RULE: Do NOT start or complete any Skill Badges yet! You must wait until you are officially enrolled in the Facilitator Program, otherwise they will not count for points."
     ],
     visualType: "credits",
   },
