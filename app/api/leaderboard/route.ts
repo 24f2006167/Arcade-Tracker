@@ -14,7 +14,6 @@ export async function GET() {
 
     const bonusMilestone = await fetchBonusMilestoneInfo([]);
     const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
-    const descLower = bonusMilestone.description.toLowerCase();
 
     const rows = await Promise.all(
       profiles.map(async (p) => {
@@ -26,21 +25,10 @@ export async function GET() {
           .limit(1)
           .maybeSingle();
 
-        let isCompleted = false;
         const badges = (latest?.badges as Badge[]) ?? [];
-        for (const b of badges) {
-          const titleLower = b.title.toLowerCase();
-          if (
-            titleLower.includes("certification") ||
-            titleLower.includes("certified") ||
-            (bonusMilestoneAnnounced && descLower.length > 50 && titleLower.length > 5 && descLower.includes(titleLower))
-          ) {
-            isCompleted = true;
-            break;
-          }
-        }
-
-        const arcade = calculateArcadeResult(badges, undefined, bonusMilestoneAnnounced && isCompleted);
+        const userBonusMilestone = await fetchBonusMilestoneInfo(badges);
+        const isBonusMilestoneCompleted = bonusMilestoneAnnounced && userBonusMilestone.completed;
+        const arcade = calculateArcadeResult(badges, undefined, isBonusMilestoneCompleted);
 
         return {
           profileId: p.id,
