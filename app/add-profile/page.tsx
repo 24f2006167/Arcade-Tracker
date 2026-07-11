@@ -87,6 +87,7 @@ export default function AddProfilePage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -223,12 +224,81 @@ export default function AddProfilePage() {
             ))}
           </div>
 
-          {/* Footer note */}
-          <p className="text-xs text-mist-muted max-w-md">
-            Your profile must have{" "}
-            <span className="text-mist font-medium">Make profile public</span>{" "}
-            enabled in Skills Boost account settings for this to work.
-          </p>
+          {/* Collapsible settings guide & redirect */}
+          <div className="w-full max-w-md flex flex-col items-center gap-3">
+            <p className="text-xs text-mist-muted">
+              Your profile must have{" "}
+              <span className="text-mist font-medium">Make profile public</span>{" "}
+              enabled in Skills Boost account settings for this to work.
+            </p>
+            
+            <button
+              type="button"
+              onClick={() => setShowGuide(!showGuide)}
+              className="text-xs text-cyan hover:text-cyan/80 hover:underline inline-flex items-center gap-1.5 transition-colors focus:outline-none cursor-pointer"
+            >
+              <span>{showGuide ? "Hide instructions" : "How to find your public URL?"}</span>
+            </button>
+
+            <AnimatePresence>
+              {showGuide && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                  className="overflow-hidden w-full text-left"
+                >
+                  <div className="glass rounded-2xl p-5 border border-white/5 space-y-4 mt-2">
+                    <h3 className="text-xs font-semibold text-mist flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-amber animate-pulse" />
+                      Public Profile Setup Instructions
+                    </h3>
+                    
+                    <div className="space-y-3.5 text-xs text-mist-muted">
+                      <div className="flex gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-mist shrink-0">1</span>
+                        <p className="leading-relaxed">
+                          Click the redirect button below to open your Google Skills Boost <strong>Account Settings</strong>.
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-mist shrink-0">2</span>
+                        <p className="leading-relaxed">
+                          Locate the <strong>Public visibility</strong> section on the page.
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-mist shrink-0">3</span>
+                        <p className="leading-relaxed">
+                          Enable the checkbox <strong className="text-amber">Make profile public</strong>. <em>(Required setting so our scraper can index your progress!)</em>
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-mist shrink-0">4</span>
+                        <p className="leading-relaxed">
+                          Copy the public profile URL shown under it (e.g. <code>https://www.skills.google/public_profiles/a5309058...</code>) and paste it into the track input box above.
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href="https://www.skills.google/my_account/profile"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-cyan/10 hover:bg-cyan/20 border border-cyan/20 text-cyan font-semibold py-2.5 text-xs transition-all cursor-pointer"
+                    >
+                      Go to settings & find URL
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
       </div>
     </>
