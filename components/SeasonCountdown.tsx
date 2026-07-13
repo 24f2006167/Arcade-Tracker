@@ -22,7 +22,7 @@ export function SeasonCountdown() {
   const label     = endCountdown.expired
     ? "Facilitator Program ended"
     : programStarted
-    ? `${SEASON.name} ends in`
+    ? "Arcade Facilitator Program ends in"
     : "Facilitator Program starts in";
 
   return (
