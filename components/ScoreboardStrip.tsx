@@ -9,12 +9,16 @@ function useCountUp(target: number, durationMs = 1100) {
   useEffect(() => {
     let raf: number;
     const start = performance.now();
+    const hasDecimal = target % 1 !== 0;
 
     function tick(now: number) {
       const elapsed = now - start;
       const progress = Math.min(elapsed / durationMs, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(target * eased));
+      const raw = target * eased;
+      // On final frame use exact target; otherwise round for smooth animation
+      const next = progress >= 1 ? target : (hasDecimal ? Math.round(raw * 2) / 2 : Math.round(raw));
+      setValue(next);
       if (progress < 1) raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
@@ -70,9 +74,12 @@ export function ScoreboardStrip({
 
 function ScoreNumber({ value, className }: { value: number; className: string }) {
   const display = useCountUp(value);
+  // Show one decimal place when the value has a fractional part
+  const formatted = display % 1 !== 0 ? display.toFixed(1) : String(Math.round(display)).padStart(2, "0");
   return (
     <span className={`relative font-score text-[28px] sm:text-[32px] leading-none ${className}`}>
-      {String(display).padStart(2, "0")}
+      {formatted}
     </span>
   );
 }
+
