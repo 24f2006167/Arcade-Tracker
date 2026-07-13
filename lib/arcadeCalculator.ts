@@ -339,7 +339,13 @@ export function classifyBadgeTitle(
     return { category: "lab_free_course", ruleId: "lab-free-keyword", lowConfidence: false };
   }
 
-  if (t.includes("skill badge") || t.includes("get started with") || t.includes("build and")) {
+  const SKILL_KEYWORDS = [
+    "skill badge", "get started with", "build and", "implement", "perform", 
+    "create", "manage", "deploy", "configure", "secure", "integrate", 
+    "analyze", "optimize", "store", "process", "develop", "automating", 
+    "architecting", "explore"
+  ];
+  if (titleIncludesAny(t, SKILL_KEYWORDS)) {
     return { category: "skill_badge", ruleId: "skill-badge-keyword", lowConfidence: false };
   }
 
