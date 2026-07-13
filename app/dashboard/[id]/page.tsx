@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX, Check } from "lucide-react";
+import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX, Check, Wifi, WifiOff, Star } from "lucide-react";
 import { ScoreboardStrip } from "@/components/ScoreboardStrip";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { IncompleteBadges } from "@/components/IncompleteBadges";
@@ -69,13 +69,26 @@ function isOwnedProfile(id: string): boolean {
   }
 }
 
+// ── Toast notification type ─────────────────────────────────────────────────
+interface BadgeToast {
+  id: string;
+  badgeName: string;
+  pointsDelta: number;
+  newBadgeCount: number;
+}
+
 export default function DashboardPage() {
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
-  const [liveSpots, setLiveSpots] = useState<Record<string, { left: number; total: number }>>({
+  // SSE live connection state
+  const [liveStatus, setLiveStatus] = useState<"connecting" | "live" | "reconnecting" | "error">("connecting");
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<BadgeToast[]>([]);
+  const [liveSpots, setLiveSpots] = useState<Record<string, { left: number; total: number }>>(
+    {
     "Arcade Trooper": { total: 6000, left: 4837 },
     "Arcade Ranger": { total: 4000, left: 3899 },
     "Arcade Champion": { total: 3000, left: 2979 },
@@ -83,22 +96,39 @@ export default function DashboardPage() {
   });
   const [lastRefreshedText, setLastRefreshedText] = useState<string>("June 29, 2026 at 8:08 AM UTC");
 
+  // ── Helper: dismiss a toast by id ───────────────────────────────────────
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // ── Persist profile to localStorage whenever data changes ───────────────
+  useEffect(() => {
+    if (data && params.id) {
+      const stored = localStorage.getItem("arcade_profiles");
+      let list: { id: string; name: string; points: number }[] = [];
+      try { list = stored ? JSON.parse(stored) : []; } catch (_) {}
+      const finalPoints = data.arcadeResult.totalArcadePoints;
+      list = list.filter((p) => p.id !== data.profile.id);
+      list.push({ id: data.profile.id, name: data.profile.display_name, points: finalPoints });
+      localStorage.setItem("arcade_profiles", JSON.stringify(list));
+      localStorage.setItem("last_profile_id", data.profile.id);
+    }
+  }, [data, params.id]);
+
   useEffect(() => {
     async function fetchLiveTiers() {
       try {
         const res = await fetch("/api/arcade-games");
         if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.prizeTiers) && data.prizeTiers.length > 0) {
+          const json = await res.json();
+          if (Array.isArray(json.prizeTiers) && json.prizeTiers.length > 0) {
             const mapped: Record<string, { left: number; total: number }> = {};
-            data.prizeTiers.forEach((tier: { name: string; left: number; total: number }) => {
+            json.prizeTiers.forEach((tier: { name: string; left: number; total: number }) => {
               mapped[tier.name] = { left: tier.left, total: tier.total };
             });
             setLiveSpots(mapped);
           }
-          if (data.lastRefreshedText) {
-            setLastRefreshedText(data.lastRefreshedText);
-          }
+          if (json.lastRefreshedText) setLastRefreshedText(json.lastRefreshedText);
         }
       } catch (err) {
         console.error("Failed to fetch live prize tiers", err);
@@ -107,45 +137,98 @@ export default function DashboardPage() {
     fetchLiveTiers();
   }, []);
 
+  // ── SSE stream subscription ──────────────────────────────────────────────
+  useEffect(() => {
+    const owned = isOwnedProfile(params.id);
+    setAccessGranted(owned);
+    if (!owned) return;
+
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
+
+    function connect() {
+      if (!mounted) return;
+      setLiveStatus("connecting");
+      es = new EventSource(`/api/profile/stream?id=${params.id}`);
+
+      // Initial snapshot from DB
+      es.addEventListener("snapshot", (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          setData(payload);
+          setLiveStatus("live");
+          setLastCheckedAt(new Date().toISOString());
+        } catch { /* ignore parse errors */ }
+      });
+
+      // Live update — badge count changed!
+      es.addEventListener("update", (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          setData({
+            profile: payload.profile,
+            snapshots: payload.snapshots,
+            arcadeResult: payload.arcadeResult,
+            bonusMilestone: payload.bonusMilestone,
+          });
+          setLiveStatus("live");
+          setLastCheckedAt(new Date().toISOString());
+
+          // Show toast for each new badge
+          const newBadges: { title: string }[] = payload.newBadges ?? [];
+          const pointsDelta: number = payload.pointsDelta ?? 0;
+          newBadges.forEach((badge, idx) => {
+            const toastId = `${Date.now()}-${idx}`;
+            setToasts((prev) => [
+              ...prev,
+              {
+                id: toastId,
+                badgeName: badge.title,
+                pointsDelta,
+                newBadgeCount: payload.newBadgeCount,
+              },
+            ]);
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => dismissToast(toastId), 5000);
+          });
+        } catch { /* ignore parse errors */ }
+      });
+
+      // Heartbeat — no change, still watching
+      es.addEventListener("heartbeat", (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          setLastCheckedAt(payload.checkedAt);
+          setLiveStatus("live");
+        } catch { /* ignore */ }
+      });
+
+      // SSE-level error → reconnect after 3s
+      es.onerror = () => {
+        if (!mounted) return;
+        setLiveStatus("reconnecting");
+        es?.close();
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+    }
+
+    connect();
+
+    return () => {
+      mounted = false;
+      es?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [params.id, dismissToast]);
+
+  // ── Manual refresh (force-scrapes skills.google immediately) ────────────
   const load = useCallback(async () => {
     const res = await fetch(`/api/profile?id=${params.id}`);
     const json = await res.json();
-    if (!res.ok) {
-      setError(json.error || "Failed to load profile");
-      return;
-    }
+    if (!res.ok) { setError(json.error || "Failed to load profile"); return; }
     setData(json);
   }, [params.id]);
-
-  useEffect(() => {
-    // Check ownership before loading data
-    const owned = isOwnedProfile(params.id);
-    setAccessGranted(owned);
-    if (owned) load();
-  }, [params.id, load]);
-
-  useEffect(() => {
-    if (data && params.id) {
-      const stored = localStorage.getItem("arcade_profiles");
-      let list = [];
-      try {
-        list = stored ? JSON.parse(stored) : [];
-      } catch (_) {}
-
-      const profile = data.profile;
-      const finalPoints = data.arcadeResult.totalArcadePoints;
-
-      list = list.filter((p: any) => p.id !== profile.id);
-      list.push({
-        id: profile.id,
-        name: profile.display_name,
-        points: finalPoints,
-      });
-
-      localStorage.setItem("arcade_profiles", JSON.stringify(list));
-      localStorage.setItem("last_profile_id", profile.id);
-    }
-  }, [data, params.id]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -264,6 +347,67 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 py-12">
+      {/* ── Toast notifications (top-right) ── */}
+      <div style={{
+        position: "fixed",
+        top: "20px",
+        right: "20px",
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        pointerEvents: "none",
+      }}>
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            style={{
+              pointerEvents: "all",
+              background: "linear-gradient(135deg, rgba(16,185,129,0.95) 0%, rgba(5,150,105,0.95) 100%)",
+              border: "1px solid rgba(52,211,153,0.5)",
+              borderRadius: "14px",
+              padding: "14px 18px",
+              minWidth: "280px",
+              maxWidth: "360px",
+              boxShadow: "0 8px 32px rgba(16,185,129,0.3), 0 2px 8px rgba(0,0,0,0.4)",
+              animation: "slideInRight 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              cursor: "pointer",
+            }}
+            onClick={() => dismissToast(toast.id)}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Star style={{ width: "16px", height: "16px", color: "#fbbf24", fill: "#fbbf24", flexShrink: 0 }} />
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
+                🎉 New Badge Earned!
+              </span>
+              {toast.pointsDelta > 0 && (
+                <span style={{
+                  marginLeft: "auto",
+                  background: "rgba(255,255,255,0.2)",
+                  borderRadius: "20px",
+                  padding: "2px 8px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#fff",
+                  whiteSpace: "nowrap",
+                }}>
+                  +{toast.pointsDelta} pts
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.85)", margin: 0, lineHeight: 1.4 }}>
+              {toast.badgeName}
+            </p>
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.6)", margin: 0 }}>
+              Total badges: {toast.newBadgeCount} · Click to dismiss
+            </p>
+          </div>
+        ))}
+      </div>
+
       {/* Top Navigation Back Redirection */}
       <div className="flex items-center justify-between rise-in">
         <Link
@@ -273,6 +417,52 @@ export default function DashboardPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Home
         </Link>
+
+        {/* Live connection indicator */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          padding: "5px 11px",
+          borderRadius: "20px",
+          fontSize: "11px",
+          fontWeight: 600,
+          background: liveStatus === "live"
+            ? "rgba(34,197,94,0.12)"
+            : liveStatus === "connecting"
+            ? "rgba(251,191,36,0.12)"
+            : "rgba(239,68,68,0.12)",
+          border: liveStatus === "live"
+            ? "1px solid rgba(34,197,94,0.35)"
+            : liveStatus === "connecting"
+            ? "1px solid rgba(251,191,36,0.35)"
+            : "1px solid rgba(239,68,68,0.35)",
+          color: liveStatus === "live" ? "#4ade80" : liveStatus === "connecting" ? "#fbbf24" : "#f87171",
+        }}>
+          {liveStatus === "live" ? (
+            <>
+              <Wifi style={{ width: "12px", height: "12px" }} />
+              <span style={{
+                display: "inline-block",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#4ade80",
+                animation: "livePulse 2s infinite",
+              }} />
+              Live · checking every 5s
+            </>
+          ) : liveStatus === "connecting" ? (
+            <><RotateCw style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} /> Connecting...</>
+          ) : (
+            <><WifiOff style={{ width: "12px", height: "12px" }} /> Reconnecting...</>
+          )}
+          {lastCheckedAt && liveStatus === "live" && (
+            <span style={{ opacity: 0.6, fontWeight: 400, fontSize: "10px" }}>
+              · checked {Math.round((Date.now() - new Date(lastCheckedAt).getTime()) / 1000)}s ago
+            </span>
+          )}
+        </div>
       </div>
 
       <SeasonCountdown />
@@ -680,6 +870,21 @@ export default function DashboardPage() {
         </div>
         <BadgeGrid badges={badges.slice(0, 12)} />
       </section>
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(60px) scale(0.9); }
+          to   { opacity: 1; transform: translateX(0)   scale(1);   }
+        }
+        @keyframes livePulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.4; transform: scale(0.8); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
