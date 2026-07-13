@@ -55,6 +55,8 @@
  * ---------------------------------------------------------------------------
  */
 
+import { CATALOG_BADGES, ARCADE_GAMES } from "./catalog";
+
 export type ArcadeCategory =
   | "arcade_game" // monthly named games (Base Camp, Trail, Adventure, Voyage, Logic Log, etc.) — registry-matched
   | "trivia_game" // weekly Trivia badges
@@ -287,6 +289,27 @@ export function classifyBadgeTitle(
   config: SeasonConfig = ACTIVE_SEASON_CONFIG
 ): { category: ArcadeCategory; ruleId: string; lowConfidence: boolean } {
   const t = title.toLowerCase().trim();
+
+  // 0. Catalog Lookup (High confidence matching from catalog.ts)
+  const catalogMatch = 
+    CATALOG_BADGES.find((b) => b.title.toLowerCase().trim() === t) ||
+    ARCADE_GAMES.find((b) => b.title.toLowerCase().trim() === t);
+
+  if (catalogMatch) {
+    if (catalogMatch.type === "skill") {
+      return { category: "skill_badge", ruleId: "catalog-skill", lowConfidence: false };
+    }
+    if (catalogMatch.type === "game") {
+      const isSpecial = config.specialBadgeTitles.some((s) => t.includes(s.toLowerCase()));
+      if (isSpecial) {
+        return { category: "special_game", ruleId: "catalog-special", lowConfidence: false };
+      }
+      return { category: "arcade_game", ruleId: "catalog-game", lowConfidence: false };
+    }
+    if (catalogMatch.type === "trivia") {
+      return { category: "trivia_game", ruleId: "catalog-trivia", lowConfidence: false };
+    }
+  }
 
   if (t.includes("trivia")) {
     return { category: "trivia_game", ruleId: "trivia", lowConfidence: false };
@@ -592,12 +615,14 @@ export function calculateArcadeResult(
   const breakdown = computeBreakdown(classifiedBadges);
 
   // Milestones count ONLY badges earned during the Facilitator window (July 13 to September 14, 2026)
+  // Normalized to UTC dates (start of day) to ensure badges completed on July 13 are correctly included
   const facilitatorBadges = classifiedBadges.filter((b) => {
     if (!b.earnedDate) return false;
-    const d = new Date(b.earnedDate);
-    if (isNaN(d.getTime())) return false;
-    const start = new Date("2026-07-13T11:30:00Z");
-    const end = new Date("2026-09-14T18:29:00Z");
+    const localDate = new Date(b.earnedDate);
+    if (isNaN(localDate.getTime())) return false;
+    const d = new Date(Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate()));
+    const start = new Date("2026-07-13T00:00:00Z");
+    const end = new Date("2026-09-14T23:59:59Z");
     return d >= start && d <= end;
   });
 

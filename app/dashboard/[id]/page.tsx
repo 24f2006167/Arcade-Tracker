@@ -30,12 +30,15 @@ function parseEarnedDate(dateStr?: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-/** Filter badges to only those earned within the Facilitator Program window. */
 function facilitatorBadges(badges: Badge[]): Badge[] {
   return badges.filter((b) => {
-    const d = parseEarnedDate(b.earnedDate);
-    if (!d) return false;
-    return d >= FACILITATOR_START && d <= FACILITATOR_END;
+    if (!b.earnedDate) return false;
+    const localDate = new Date(b.earnedDate);
+    if (isNaN(localDate.getTime())) return false;
+    const d = new Date(Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate()));
+    const start = new Date("2026-07-13T00:00:00Z");
+    const end = new Date("2026-09-14T23:59:59Z");
+    return d >= start && d <= end;
   });
 }
 
