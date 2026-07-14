@@ -50,7 +50,8 @@ export const metadata: Metadata = {
 };
 
 import NavBar from "@/components/NavBar";
-import VoiceAgent from "@/components/VoiceAgent"; // EXPERIMENTAL — remove if not keeping
+import VoiceAgent from "@/components/VoiceAgent";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default function RootLayout({
   children,
@@ -63,23 +64,22 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} ${pressStart.variable} h-full`}
     >
       <body className="min-h-full antialiased">
-        <div className="aurora-field" aria-hidden>
-          <div className="aurora-blob a1" />
-          <div className="aurora-blob a2" />
-          <div className="aurora-blob a3" />
-          <div className="aurora-blob a4" />
-          <div className="aurora-grain" />
-        </div>
+        <ThemeProvider>
+          <div className="aurora-field" aria-hidden>
+            <div className="aurora-blob a1" />
+            <div className="aurora-blob a2" />
+            <div className="aurora-blob a3" />
+            <div className="aurora-blob a4" />
+            <div className="aurora-grain" />
+          </div>
 
-        <BackgroundEffects />
-        <HackerBootWrapper />
+          <BackgroundEffects />
+          <HackerBootWrapper />
 
-        <NavBar />
-
-        <main className="mx-auto max-w-6xl px-4 sm:px-6 overflow-x-hidden">{children}</main>
-
-        {/* EXPERIMENTAL: Voice Agent — remove the line below + VoiceAgent.tsx to revert */}
-        <VoiceAgent />
+          <NavBar />
+          <main className="mx-auto max-w-6xl px-4 sm:px-6 overflow-x-hidden">{children}</main>
+          <VoiceAgent />
+        </ThemeProvider>
       </body>
     </html>
   );

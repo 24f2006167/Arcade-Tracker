@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Sparkles, ShieldX } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { PointsSimulator } from "@/components/PointsSimulator";
 import type { ArcadeResult } from "@/lib/arcadeCalculator";
 import type { Badge, BonusMilestoneInfo } from "@/lib/scraper";
@@ -29,6 +30,8 @@ interface ProfileResponse {
 }
 
 export default function SimulatorPage() {
+  const { theme, hackerMode } = useTheme();
+  const isLight = theme === "light";
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,18 +137,43 @@ export default function SimulatorPage() {
       </div>
 
       {/* Hero Header */}
-      <div className="text-center space-y-3">
-        <span className="inline-flex items-center gap-1.5 text-xs text-cyan bg-cyan/10 border border-cyan/20 px-3.5 py-1.5 rounded-full font-semibold">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          Interactive Swags & Points Calculator
-        </span>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-mist">
-          Forecast Your Arcade Journey
-        </h1>
-        <p className="text-xs text-mist-muted max-w-md mx-auto leading-relaxed">
-          Forecast what points, milestone bonuses, and swag prize tiers you will unlock next by checking combinations of badges below.
-        </p>
-      </div>
+      {hackerMode ? (
+        <div className="glass-strong rounded-3xl relative overflow-hidden px-6 py-6 border border-line flex flex-col md:flex-row items-center gap-6">
+          <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl overflow-hidden border border-line relative select-none pointer-events-none">
+            <img 
+              src="/cyber-brain.png" 
+              alt="AI Brain" 
+              className={`w-full h-full object-cover ${isLight ? "opacity-90 brightness-95" : "opacity-80"}`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
+          <div className="text-center md:text-left space-y-2 flex-1">
+            <span className="inline-flex items-center gap-1.5 text-xs text-cyan bg-cyan/15 border border-cyan/35 px-3 py-1 rounded-full font-semibold uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 animate-pulse" />
+              Interactive Forecast Engine
+            </span>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-mist">
+              Forecast Your Arcade Journey
+            </h1>
+            <p className="text-xs text-mist-muted leading-relaxed">
+              Unlock the metrics: select badges in the simulator below to simulate milestone point unlocks, facilitator bonuses, and swag prize eligibility.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center space-y-3">
+          <span className="inline-flex items-center gap-1.5 text-xs text-cyan bg-cyan/10 border border-cyan/20 px-3.5 py-1.5 rounded-full font-semibold">
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            Interactive Swags & Points Calculator
+          </span>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-mist">
+            Forecast Your Arcade Journey
+          </h1>
+          <p className="text-xs text-mist-muted max-w-md mx-auto leading-relaxed">
+            Forecast what points, milestone bonuses, and swag prize tiers you will unlock next by checking combinations of badges below.
+          </p>
+        </div>
+      )}
 
       {/* Simulator Component */}
       <PointsSimulator

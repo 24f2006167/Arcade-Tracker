@@ -4,21 +4,26 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { RotateCw, Gamepad2, AlertTriangle, Calendar, Lock, ArrowLeft, ShieldX, Check, Wifi, WifiOff, Star } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { ScoreboardStrip } from "@/components/ScoreboardStrip";
+import { PointsDistributionTable } from "@/components/PointsDistributionTable";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { IncompleteBadges } from "@/components/IncompleteBadges";
 import { HistoryChart } from "@/components/HistoryChart";
+import { MilestoneProgressStepper } from "@/components/MilestoneProgressStepper";
 import { SeasonCountdown } from "@/components/SeasonCountdown";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
 import { SEASON } from "@/lib/arcade";
 import type { ArcadeResult } from "@/lib/arcadeCalculator";
 import type { Badge, BonusMilestoneInfo } from "@/lib/scraper";
 
+import HackerVaultTransition from "@/components/hero/HackerVaultTransition";
+
 // Facilitator program date boundaries (IST = UTC+5:30)
 // July 13, 2026 17:00 IST = July 13, 2026 11:30 UTC
 const FACILITATOR_START = new Date("2026-07-13T11:30:00Z");
 // September 14, 2026 23:59 IST = September 14, 2026 18:29 UTC
-const FACILITATOR_END   = new Date("2026-09-14T18:29:00Z");
+const FACILITATOR_END = new Date("2026-09-14T18:29:00Z");
 
 /**
  * Parse a badge's earnedDate string into a Date.
@@ -78,6 +83,8 @@ interface BadgeToast {
 }
 
 export default function DashboardPage() {
+  const { theme, hackerMode, isTransitioning, isTurningOff, completeTransition } = useTheme();
+  const isLight = theme === "light";
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,11 +96,11 @@ export default function DashboardPage() {
   const [toasts, setToasts] = useState<BadgeToast[]>([]);
   const [liveSpots, setLiveSpots] = useState<Record<string, { left: number; total: number }>>(
     {
-    "Arcade Trooper": { total: 6000, left: 4837 },
-    "Arcade Ranger": { total: 4000, left: 3899 },
-    "Arcade Champion": { total: 3000, left: 2979 },
-    "Arcade Legend": { total: 2500, left: 2500 },
-  });
+      "Arcade Trooper": { total: 6000, left: 4837 },
+      "Arcade Ranger": { total: 4000, left: 3899 },
+      "Arcade Champion": { total: 3000, left: 2979 },
+      "Arcade Legend": { total: 2500, left: 2500 },
+    });
   const [lastRefreshedText, setLastRefreshedText] = useState<string>("June 29, 2026 at 8:08 AM UTC");
 
   // ── Helper: dismiss a toast by id ───────────────────────────────────────
@@ -106,7 +113,7 @@ export default function DashboardPage() {
     if (data && params.id) {
       const stored = localStorage.getItem("arcade_profiles");
       let list: { id: string; name: string; points: number }[] = [];
-      try { list = stored ? JSON.parse(stored) : []; } catch (_) {}
+      try { list = stored ? JSON.parse(stored) : []; } catch (_) { }
       const finalPoints = data.arcadeResult.totalArcadePoints;
       list = list.filter((p) => p.id !== data.profile.id);
       list.push({ id: data.profile.id, name: data.profile.display_name, points: finalPoints });
@@ -137,11 +144,26 @@ export default function DashboardPage() {
     fetchLiveTiers();
   }, []);
 
-  // ── SSE stream subscription ──────────────────────────────────────────────
+  // ── Initial HTTP fetch (fast fallback so data shows immediately) ────────
   useEffect(() => {
     const owned = isOwnedProfile(params.id);
     setAccessGranted(owned);
     if (!owned) return;
+
+    // Load data via regular HTTP immediately so we don't wait for SSE snapshot
+    fetch(`/api/profile?id=${params.id}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.profile) {
+          setData(json);
+        }
+      })
+      .catch(() => { /* SSE snapshot will cover this */ });
+  }, [params.id]);
+
+  // ── SSE stream subscription ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!isOwnedProfile(params.id)) return;
 
     let es: EventSource | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -152,7 +174,7 @@ export default function DashboardPage() {
       setLiveStatus("connecting");
       es = new EventSource(`/api/profile/stream?id=${params.id}`);
 
-      // Initial snapshot from DB
+      // Initial snapshot from DB — overrides the HTTP fetch with full live data
       es.addEventListener("snapshot", (e) => {
         try {
           const payload = JSON.parse(e.data);
@@ -341,12 +363,19 @@ export default function DashboardPage() {
   // ── Facilitator milestones: only count badges earned during the program ────
   const now = new Date();
   const facilitatorStarted = now >= FACILITATOR_START;
-  const facilitatorEnded   = now > FACILITATOR_END;
+  const facilitatorEnded = now > FACILITATOR_END;
   const facBadges = facilitatorBadges(badges);
   const facArcade = calculateArcadeResult(facBadges);
 
   return (
     <div className="space-y-8 py-12">
+      {/* Hacker Vault Decryption lock overlay transition */}
+      {isTransitioning && (
+        <HackerVaultTransition 
+          isTurningOff={isTurningOff}
+          onComplete={completeTransition} 
+        />
+      )}
       {/* ── Toast notifications (top-right) ── */}
       <div style={{
         position: "fixed",
@@ -430,13 +459,13 @@ export default function DashboardPage() {
           background: liveStatus === "live"
             ? "rgba(34,197,94,0.12)"
             : liveStatus === "connecting"
-            ? "rgba(251,191,36,0.12)"
-            : "rgba(239,68,68,0.12)",
+              ? "rgba(251,191,36,0.12)"
+              : "rgba(239,68,68,0.12)",
           border: liveStatus === "live"
             ? "1px solid rgba(34,197,94,0.35)"
             : liveStatus === "connecting"
-            ? "1px solid rgba(251,191,36,0.35)"
-            : "1px solid rgba(239,68,68,0.35)",
+              ? "1px solid rgba(251,191,36,0.35)"
+              : "1px solid rgba(239,68,68,0.35)",
           color: liveStatus === "live" ? "#4ade80" : liveStatus === "connecting" ? "#fbbf24" : "#f87171",
         }}>
           {liveStatus === "live" ? (
@@ -468,9 +497,21 @@ export default function DashboardPage() {
       <SeasonCountdown />
 
       {/* Hero */}
-      <div className="gradient-ring glass-strong rounded-2xl relative overflow-hidden px-7 py-8 rise-in">
-        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-gradient-to-br from-cyan/20 via-violet/20 to-pink/20 blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+      <div className="gradient-ring glass-strong rounded-2xl relative overflow-hidden px-7 py-8 rise-in border border-line">
+        {hackerMode ? (
+          <div className="absolute inset-0 z-0 pointer-events-none select-none">
+            <img 
+              src="/hacker-desk.png" 
+              alt="Cyber Cover" 
+              className={`w-full h-full object-cover object-center ${isLight ? "opacity-15 mix-blend-multiply" : "opacity-25 mix-blend-lighten"}`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-void via-void/90 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-void to-transparent opacity-65" />
+          </div>
+        ) : (
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-gradient-to-br from-cyan/20 via-violet/20 to-pink/20 blur-3xl" />
+        )}
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan pulse-glow" />
@@ -506,6 +547,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+
       {arcade.breakdown.needsReview.length > 0 && (
         <div className="glass rounded-2xl px-5 py-4 flex items-start gap-3 border border-amber/30 rise-in">
           <AlertTriangle className="w-4 h-4 text-amber shrink-0 mt-0.5" />
@@ -526,6 +568,12 @@ export default function DashboardPage() {
           { label: "Total Badges", value: latest?.total_badges ?? 0, accent: "cyan", icon: "award" },
           { label: "Snapshots Logged", value: data.snapshots.length, accent: "pink", icon: "history" },
         ]}
+      />
+
+      {/* ── Points Distribution Table ─────────────────────────────────── */}
+      <PointsDistributionTable
+        arcadeResult={arcade}
+        totalBadges={latest?.total_badges ?? 0}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -558,9 +606,8 @@ export default function DashboardPage() {
                   <div key={tier.name} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span
-                        className={`font-medium ${
-                          tier.achieved ? "text-amber" : tier.current ? "text-cyan" : "text-mist-muted"
-                        }`}
+                        className={`font-medium ${tier.achieved ? "text-amber" : tier.current ? "text-cyan" : "text-mist-muted"
+                          }`}
                       >
                         {tier.name}
                         {tier.achieved && " ✓"}
@@ -571,11 +618,10 @@ export default function DashboardPage() {
                     </div>
                     <div className="h-2 rounded-full bg-white/5 overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-700 ${
-                          tier.achieved
+                        className={`h-full rounded-full transition-all duration-700 ${tier.achieved
                             ? "bg-gradient-to-r from-amber to-pink"
                             : "bg-gradient-to-r from-cyan to-violet"
-                        }`}
+                          }`}
                         style={{ width: `${tier.pct}%` }}
                       />
                     </div>
@@ -622,11 +668,11 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-2">
               {[
-                { label: "Arcade Adventure",  desc: "x1 game badge",   pts: "= 1 point",  color: "text-pink" },
-                { label: "Arcade Voyage",     desc: "x1 game badge",   pts: "= 1 point",  color: "text-pink" },
-                { label: "Arcade Trail",      desc: "x1 game badge",   pts: "= 1 point",  color: "text-pink" },
-                { label: "Skill Badge",       desc: "x2 badges",       pts: "= 1 point",  color: "text-amber" },
-                { label: "Milestone",         desc: "x1 completed",    pts: "= X bonus",  color: "text-violet" },
+                { label: "Arcade Adventure", desc: "x1 game badge", pts: "= 1 point", color: "text-pink" },
+                { label: "Arcade Voyage", desc: "x1 game badge", pts: "= 1 point", color: "text-pink" },
+                { label: "Arcade Trail", desc: "x1 game badge", pts: "= 1 point", color: "text-pink" },
+                { label: "Skill Badge", desc: "x2 badges", pts: "= 1 point", color: "text-amber" },
+                { label: "Milestone", desc: "x1 completed", pts: "= X bonus", color: "text-violet" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-0">
                   <div className="flex items-center gap-2">
@@ -649,11 +695,11 @@ export default function DashboardPage() {
           <div className="glass-strong rounded-2xl px-6 py-6 space-y-5 rise-in">
             <h2 className="font-display text-sm font-semibold text-mist">Current progress</h2>
             {[
-              { label: "Arcade Games",   value: arcade.breakdown.arcadeGames,   color: "from-pink to-amber" },
-              { label: "Skill Badges",   value: arcade.breakdown.skillBadges,   color: "from-cyan to-violet" },
-              { label: "Trivia Games",   value: arcade.breakdown.triviaGames,   color: "from-amber to-cyan" },
-              { label: "Special Games",  value: arcade.breakdown.specialGames,  color: "from-violet to-pink" },
-              { label: "Level Badges",   value: arcade.breakdown.levelBadges,   color: "from-cyan to-amber" },
+              { label: "Arcade Games", value: arcade.breakdown.arcadeGames, color: "from-pink to-amber" },
+              { label: "Skill Badges", value: arcade.breakdown.skillBadges, color: "from-cyan to-violet" },
+              { label: "Trivia Games", value: arcade.breakdown.triviaGames, color: "from-amber to-cyan" },
+              { label: "Special Games", value: arcade.breakdown.specialGames, color: "from-violet to-pink" },
+              { label: "Level Badges", value: arcade.breakdown.levelBadges, color: "from-cyan to-amber" },
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between text-xs">
                 <span className="text-mist-muted flex items-center gap-1.5">
@@ -713,7 +759,7 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            
+
             <div className={`flex items-start gap-3.5 bg-white/5 rounded-xl p-3 border ${data?.bonusMilestone?.completed ? "border-emerald-500/20" : "border-violet/20"}`}>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${data?.bonusMilestone?.completed ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-violet/10 border border-violet/20 text-violet"}`}>
                 {data?.bonusMilestone?.completed ? <Check className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
@@ -724,7 +770,7 @@ export default function DashboardPage() {
                 </p>
                 {data?.bonusMilestone?.completed ? (
                   <p className="text-[10px] text-mist-muted leading-relaxed">
-                    Congratulations! You successfully completed the Bonus Milestone and unlocked <span className="text-emerald-400 font-semibold">10 extra bonus points</span>. 
+                    Congratulations! You successfully completed the Bonus Milestone and unlocked <span className="text-emerald-400 font-semibold">10 extra bonus points</span>.
                     Verified by badge: <span className="text-emerald-400 font-medium">{data.bonusMilestone.completedBadgeTitle}</span>.
                   </p>
                 ) : (
@@ -759,9 +805,8 @@ export default function DashboardPage() {
         </div>
         <div className="h-2 rounded-full bg-white/5 overflow-hidden">
           <div
-            className={`h-full rounded-full ${
-              arcade.workMeetsPlay.achieved ? "bg-amber" : "bg-gradient-to-r from-violet to-pink"
-            }`}
+            className={`h-full rounded-full ${arcade.workMeetsPlay.achieved ? "bg-amber" : "bg-gradient-to-r from-violet to-pink"
+              }`}
             style={{ width: `${arcade.workMeetsPlay.pct}%` }}
           />
         </div>
@@ -772,84 +817,12 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* ── Facilitator Program Milestones ──────────────────────────────── */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h2 className="font-display text-sm font-semibold text-mist">
-              Facilitator Program Milestones
-            </h2>
-            <a
-              href="https://rsvp.withgoogle.com/events/arcade-facilitator/home"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] text-cyan hover:underline flex items-center gap-1"
-            >
-              Official Program Page →
-            </a>
-          </div>
-          <span className="text-[11px] text-mist-muted flex items-center gap-1.5 shrink-0 self-start">
-            <Calendar className="w-3 h-3" />
-            13 Jul – 14 Sep 2026
-          </span>
-        </div>
-
-        {!facilitatorStarted && (
-          <div className="glass rounded-2xl px-5 py-4 flex items-start gap-3 border border-violet/30 rise-in">
-            <Lock className="w-4 h-4 text-violet shrink-0 mt-0.5" />
-            <p className="text-xs text-mist-muted">
-              <span className="text-violet font-semibold">These milestones are responsible for providing free bonus points and this event is not live yet!</span> Badges earned before 13 July will not count. All progress starts from 0 on launch day.
-            </p>
-          </div>
-        )}
-
-        {facilitatorEnded ? (
-          <div className="glass rounded-2xl px-6 py-6 text-center text-mist-muted text-sm">
-            The Facilitator Program ended on 14 September 2026.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {facArcade.milestones.map((m, i) => (
-              <div
-                key={m.id}
-                className={`gradient-ring glass rounded-2xl px-5 py-5 space-y-3.5 rise-in ${
-                  m.achieved ? "shadow-lg shadow-amber/10" : ""
-                }`}
-                style={{ animationDelay: `${i * 0.06}s` }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-display text-sm font-semibold text-mist">{m.label}</span>
-                  <span className="text-[11px] text-mist-muted">
-                    {m.achieved ? "Unlocked ✓" : `+${m.bonusPoints} pts`}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <div>
-                    <span className="text-mist-muted">Game Badges</span>
-                    <p className="text-mist font-medium">
-                      {m.gamesDone} / {m.gamesRequired}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-mist-muted">Skill Badges</span>
-                    <p className="text-mist font-medium">
-                      {m.skillBadgesDone} / {m.skillBadgesRequired}
-                    </p>
-                  </div>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      m.achieved ? "bg-amber" : "bg-gradient-to-r from-cyan to-pink"
-                    }`}
-                    style={{ width: `${m.pct}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* ── Facilitator Program Milestones (visual stepper) ─────────────── */}
+      <MilestoneProgressStepper
+        milestones={facArcade.milestones}
+        facilitatorStarted={facilitatorStarted}
+        facilitatorEnded={facilitatorEnded}
+      />
 
       <section className="space-y-4">
         <h2 className="font-display text-sm font-semibold text-mist">Arcade Points history</h2>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Crown, Medal, ExternalLink } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Row {
   profileId: string;
@@ -36,6 +37,8 @@ function getOwnedProfileIds(): Set<string> {
 }
 
 export default function LeaderboardPage() {
+  const { theme, hackerMode } = useTheme();
+  const isLight = theme === "light";
   const [rows, setRows] = useState<Row[] | null>(null);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
 
@@ -48,16 +51,39 @@ export default function LeaderboardPage() {
 
   return (
     <div className="space-y-10 py-12">
-      <div className="space-y-2 rise-in">
-        <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
-          <span className="w-1.5 h-1.5 rounded-full bg-pink pulse-glow" />
-          High scores
-        </span>
-        <h1 className="font-display text-3xl font-semibold text-mist">Leaderboard</h1>
-        <p className="text-mist-muted text-sm">
-          Ranked across every profile this tracker has indexed.
-        </p>
-      </div>
+      {hackerMode ? (
+        <div className="glass-strong rounded-3xl p-5 md:p-6 border border-line flex flex-row items-center gap-6 rise-in">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border border-line shrink-0 relative select-none pointer-events-none">
+            <img 
+              src="/hacker-visor.png" 
+              alt="Hacker Visor Logo" 
+              className={`w-full h-full object-cover ${isLight ? "opacity-95 brightness-95" : "opacity-85"}`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-red-950/20 to-transparent" />
+          </div>
+          <div className="space-y-1 flex-1">
+            <span className="inline-flex items-center gap-1.5 text-[10px] text-pink bg-pink/10 border border-pink/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-pink animate-pulse" />
+              High scores
+            </span>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-mist">Leaderboard</h1>
+            <p className="text-mist-muted text-xs">
+              Live ranking across every profile indexed by the STS database.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2 rise-in">
+          <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
+            <span className="w-1.5 h-1.5 rounded-full bg-pink pulse-glow" />
+            High scores
+          </span>
+          <h1 className="font-display text-3xl font-semibold text-mist">Leaderboard</h1>
+          <p className="text-mist-muted text-sm">
+            Ranked across every profile this tracker has indexed.
+          </p>
+        </div>
+      )}
 
       {!rows && <span className="text-mist-muted text-sm animate-pulse">Loading...</span>}
 
@@ -81,9 +107,8 @@ export default function LeaderboardPage() {
             return (
               <div
                 key={row.profileId}
-                className={`gradient-ring glass rounded-2xl flex items-center gap-4 px-5 py-4 rise-in ${
-                  isOwn ? "border border-cyan/30" : ""
-                }`}
+                className={`gradient-ring glass rounded-2xl flex items-center gap-4 px-5 py-4 rise-in ${isOwn ? "border border-cyan/30" : ""
+                  }`}
                 style={{ animationDelay: `${i * 0.05}s` }}
               >
                 <span className="font-score text-[10px] w-10 flex items-center gap-1.5 text-mist-muted shrink-0">

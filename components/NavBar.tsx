@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import {
   AccountSwitcher,
   DashboardNavLink,
   SimulatorNavLink,
   AddProfileNavLink,
 } from "@/components/AccountSwitcher";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const { theme, toggle, hackerMode, toggleHackerMode } = useTheme();
 
   // Close drawer on Escape key
   useEffect(() => {
@@ -97,6 +99,33 @@ export default function NavBar() {
             Prep Guide
           </Link>
           <AccountSwitcher />
+          {/* Hacker Mode button */}
+          <button
+            onClick={toggleHackerMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-mono font-bold tracking-wider transition-all duration-300 active:scale-95 cursor-pointer uppercase ${
+              hackerMode
+                ? "bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+                : "bg-white/5 border-line/40 text-mist-muted hover:text-mist hover:bg-white/10"
+            }`}
+            style={{ flexShrink: 0 }}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${hackerMode ? "bg-red-500 animate-pulse" : "bg-mist-muted"}`} />
+            Hacker Mode: {hackerMode ? "ON" : "OFF"}
+          </button>
+          {/* Theme toggle */}
+          <button
+            id="theme-toggle-btn"
+            onClick={toggle}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="flex items-center justify-center w-8 h-8 rounded-full glass hover:bg-white/10 text-mist-muted hover:text-mist transition-all duration-200 active:scale-90 cursor-pointer"
+            style={{ flexShrink: 0 }}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-4 h-4" style={{ color: "#ffc24b", filter: "drop-shadow(0 0 6px rgba(255,194,75,0.5))" }} />
+            ) : (
+              <Moon className="w-4 h-4" style={{ color: "#7c3aed" }} />
+            )}
+          </button>
         </div>
 
         {/* Hamburger button (visible below 1024 px) */}
@@ -114,9 +143,8 @@ export default function NavBar() {
       {/* ── Mobile / Tablet drawer (below 1024 px) ───────────────── */}
       <div
         id="mobile-drawer"
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 pointer-events-none"
-        }`}
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+          }`}
         aria-hidden={!isOpen}
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-5 pt-2 flex flex-col gap-1 border-t border-line/40">
@@ -144,6 +172,31 @@ export default function NavBar() {
           <div className="mt-3 pt-3 border-t border-line/40">
             <AccountSwitcher />
           </div>
+
+          {/* Hacker Mode in mobile drawer */}
+          <button
+            onClick={() => { toggleHackerMode(); close(); }}
+            className={`mt-2 flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono font-bold tracking-wider transition-all duration-150 w-full cursor-pointer uppercase ${
+              hackerMode
+                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                : "text-mist-muted hover:text-mist hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${hackerMode ? "bg-red-500 animate-pulse" : "bg-mist-muted"}`} />
+            Hacker Mode: {hackerMode ? "ON" : "OFF"}
+          </button>
+
+          {/* Theme toggle in mobile drawer */}
+          <button
+            onClick={() => { toggle(); close(); }}
+            className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-mist-muted hover:text-mist hover:bg-white/5 transition-all duration-150 w-full cursor-pointer"
+          >
+            {theme === "dark" ? (
+              <><Sun className="w-4 h-4" style={{ color: "#ffc24b" }} /> Switch to Light Mode</>
+            ) : (
+              <><Moon className="w-4 h-4" style={{ color: "#7c3aed" }} /> Switch to Dark Mode</>
+            )}
+          </button>
         </div>
       </div>
     </nav>

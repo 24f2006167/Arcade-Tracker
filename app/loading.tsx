@@ -87,11 +87,11 @@ export default function Loading() {
       <div className="relative w-28 h-28 flex items-center justify-center">
         {/* Pulse glow background */}
         <div className="absolute inset-0 rounded-full bg-[#22e5e5]/10 blur-3xl animate-pulse" />
-        
+
         {/* Hacker Silhouette Logo pulsing */}
-        <img 
-          src="/hacker-silhouette.png" 
-          alt="Hacker Logo" 
+        <img
+          src="/hacker-silhouette.png"
+          alt="Hacker Logo"
           className="w-22 h-22 object-contain animate-pulse filter drop-shadow-[0_0_20px_rgba(34,229,229,0.3)]"
           style={{ animationDuration: "2.5s" }}
         />
@@ -117,7 +117,7 @@ export default function Loading() {
 
         {/* HUD Progress Bar */}
         <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden border border-white/5">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-[#22e5e5] via-[#b389ff] to-[#ff6fb3] rounded-full transition-all duration-150"
             style={{ width: `${Math.min(percent, 100)}%` }}
           />

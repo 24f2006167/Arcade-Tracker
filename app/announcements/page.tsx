@@ -6,6 +6,7 @@ import {
   ExternalLink, ChevronDown, ChevronUp, Clock, Users, Flame,
   Star, Zap, Target, BookOpen, Gift, Info,
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Announcement {
@@ -73,10 +74,10 @@ const MILESTONES = [
 
 // ── Tier helpers ───────────────────────────────────────────────────────────────
 const TIER_STYLES: Record<string, { bg: string; text: string; ring: string; icon: string }> = {
-  "#fbbf24": { bg: "from-amber/15 to-amber/5",   text: "text-amber",       ring: "ring-amber/30",       icon: "👑" },
+  "#fbbf24": { bg: "from-amber/15 to-amber/5", text: "text-amber", ring: "ring-amber/30", icon: "👑" },
   "#f97316": { bg: "from-orange-400/15 to-orange-400/5", text: "text-orange-400", ring: "ring-orange-400/30", icon: "🏆" },
-  "#a78bfa": { bg: "from-violet/15 to-violet/5", text: "text-violet",      ring: "ring-violet/30",      icon: "⚔️" },
-  "#22e5e5": { bg: "from-cyan/15 to-cyan/5",     text: "text-cyan",        ring: "ring-cyan/30",        icon: "🛡️" },
+  "#a78bfa": { bg: "from-violet/15 to-violet/5", text: "text-violet", ring: "ring-violet/30", icon: "⚔️" },
+  "#22e5e5": { bg: "from-cyan/15 to-cyan/5", text: "text-cyan", ring: "ring-cyan/30", icon: "🛡️" },
 };
 
 // ── Countdown to facilitator start ────────────────────────────────────────────
@@ -158,6 +159,8 @@ function CountdownWidget({ startDate, officialLink }: { startDate: string; offic
 
 // ── Tier Spots Grid (horizontal, full width) ────────────────────────────────────
 function TierSpotsGrid({ tiers, waterfallSystem }: { tiers: TierInfo[]; waterfallSystem?: { description: string; note: string } }) {
+  const { theme, hackerMode } = useTheme();
+  const isLight = theme === "light";
   const [showWaterfall, setShowWaterfall] = useState(false);
   const reversed = [...tiers].reverse();
 
@@ -197,11 +200,36 @@ function TierSpotsGrid({ tiers, waterfallSystem }: { tiers: TierInfo[]; waterfal
       {/* Waterfall explanation */}
       {showWaterfall && waterfallSystem && (
         <div className="px-4 pb-4 space-y-2">
-          <div className="rounded-xl bg-amber/5 border border-amber/15 px-4 py-3 text-[11px] text-mist-muted leading-relaxed">
-            <span className="text-amber font-semibold">⬇️ Waterfall System: </span>
-            {waterfallSystem.description}
-          </div>
-          <p className="text-[11px] text-cyan/80 px-1">{waterfallSystem.note}</p>
+          {hackerMode ? (
+            <div className="rounded-2xl glass-strong border border-red-500/20 p-5 flex flex-col md:flex-row items-center gap-5">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-red-500/30 shrink-0 relative select-none pointer-events-none">
+                <img 
+                  src="/cyber-warning.png" 
+                  alt="Cyber Warning Globe" 
+                  className={`w-full h-full object-cover ${isLight ? "opacity-95 brightness-95" : "opacity-85"}`}
+                />
+                <div className="absolute inset-0 bg-red-500/10" />
+              </div>
+              <div className="space-y-1.5 flex-1 text-left">
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                  ⚠️ System Rules Notice
+                </span>
+                <p className="text-[11px] text-mist-muted leading-relaxed">
+                  <span className="text-red-400 font-semibold">Waterfall Priority: </span>
+                  {waterfallSystem.description}
+                </p>
+                <p className="text-[10px] text-cyan/70 font-mono">{waterfallSystem.note}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl bg-amber/5 border border-amber/15 px-4 py-3 text-[11px] text-mist-muted leading-relaxed">
+                <span className="text-amber font-semibold">⬇️ Waterfall System: </span>
+                {waterfallSystem.description}
+              </div>
+              <p className="text-[11px] text-cyan/80 px-1">{waterfallSystem.note}</p>
+            </>
+          )}
         </div>
       )}
 
@@ -305,11 +333,10 @@ function AnnouncementCard({ announcement, index, featured = false }: { announcem
 
   return (
     <div
-      className={`group glass rounded-2xl overflow-hidden border transition-all hover:-translate-y-0.5 hover:shadow-xl rise-in ${
-        featured
+      className={`group glass rounded-2xl overflow-hidden border transition-all hover:-translate-y-0.5 hover:shadow-xl rise-in ${featured
           ? "border-blue-400/25 hover:border-blue-400/40 hover:shadow-blue-400/10"
           : "border-white/8 hover:border-white/20"
-      }`}
+        }`}
       style={{ animationDelay: `${index * 0.06}s` }}
     >
       {/* Featured image */}
@@ -522,7 +549,7 @@ function PrizeCounterCard() {
         <div>
           <p className="text-sm font-bold text-mist mb-1">Prize Counter</p>
           <p className="text-[11px] text-mist-muted leading-relaxed">
-            The Prize Counter opens <span className="text-amber font-medium">after the 2026 season ends</span> (Dec 2026). 
+            The Prize Counter opens <span className="text-amber font-medium">after the 2026 season ends</span> (Dec 2026).
             First-come, first-served starting from the Legend Tier.
           </p>
           <a
@@ -551,15 +578,15 @@ function BonusMilestonePreview() {
       </div>
       <div className="p-5 text-sm text-mist-muted leading-relaxed space-y-3">
         <p>
-          For the first time ever, there is more than one way to earn "Bonus Points" in the Arcade Facilitator program! 
+          For the first time ever, there is more than one way to earn "Bonus Points" in the Arcade Facilitator program!
           This time, we want to make sure you step away with some <strong className="text-orange-300 font-medium">industry-ready skills</strong>.
         </p>
         <p>
-          More details about the new "Bonus Milestone", its eligibility criteria, and how you will be able to earn 
+          More details about the new "Bonus Milestone", its eligibility criteria, and how you will be able to earn
           <strong className="text-orange-300 font-medium"> an extra 10 Bonus Points</strong> will be posted here soon.
         </p>
         <p className="text-[11px] text-mist/60 italic">So please stay tuned and keep an eye out here!</p>
-        
+
         <div className="pt-2">
           <a
             href="https://rsvp.withgoogle.com/events/arcade-facilitator/bonus-milestone"
@@ -693,7 +720,7 @@ export default function AnnouncementsPage() {
 
       {/* ── Main content grid ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* LEFT: Announcements feed (2 columns wide) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2">
@@ -748,14 +775,14 @@ export default function AnnouncementsPage() {
           <SeasonProgressCard />
           <PointsSystemCard />
         </div>
-        
+
         {/* Right column stacking how to earn and milestones */}
         <div className="space-y-6">
           <HowToEarnCard />
           <MilestonesCard />
         </div>
       </div>
-      
+
     </div>
   );
 }
