@@ -595,5 +595,15 @@ export const CATALOG_BADGES: CatalogBadge[] = [
     "title": "Create Your First Gemini Enterprise Application",
     "type": "skill",
     "url": "https://www.skills.google/course_templates/1586"
+  },
+  {
+    "title": "Build a Data Mesh with Knowledge Catalog",
+    "type": "skill",
+    "url": "https://www.cloudskillsboost.google/course_templates/1484"
+  },
+  {
+    "title": "Build Serverless Applications with Cloud Run Functions",
+    "type": "skill",
+    "url": "https://www.cloudskillsboost.google/course_templates/1039"
   }
 ];

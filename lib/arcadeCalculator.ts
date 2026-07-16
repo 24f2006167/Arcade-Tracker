@@ -340,10 +340,10 @@ export function classifyBadgeTitle(
   }
 
   const SKILL_KEYWORDS = [
-    "skill badge", "get started with", "build and", "implement", "perform", 
+    "skill badge", "get started with", "build", "implement", "perform", 
     "create", "manage", "deploy", "configure", "secure", "integrate", 
-    "analyze", "optimize", "store", "process", "develop", "automating", 
-    "architecting", "explore"
+    "analyze", "optimize", "store", "process", "develop", "automate", 
+    "automating", "architect", "architecting", "explore"
   ];
   if (titleIncludesAny(t, SKILL_KEYWORDS)) {
     return { category: "skill_badge", ruleId: "skill-badge-keyword", lowConfidence: false };
