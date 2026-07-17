@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
@@ -141,12 +141,28 @@ function StepCard({
 }
 
 // ── Lab accordion ────────────────────────────────────────────────────────────
-function LabCard({ lab }: { lab: LabSolution }) {
-  const [open, setOpen] = useState(false);
+function LabCard({ lab, active = false }: { lab: LabSolution; active?: boolean }) {
+  const [open, setOpen] = useState(active);
   const hasQuick = !!lab.quickScript;
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll into view if deep-linked
+  useEffect(() => {
+    if (active && cardRef.current) {
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, [active]);
 
   return (
-    <div className="glass rounded-2xl border border-line/40 overflow-hidden">
+    <div
+      id={lab.labId}
+      ref={cardRef}
+      className={`glass rounded-2xl border overflow-hidden transition-colors ${
+        active ? "border-cyan/40 shadow-md shadow-cyan/10" : "border-line/40"
+      }`}
+    >
       {/* Header */}
       <button
         onClick={() => setOpen((v) => !v)}
@@ -330,6 +346,13 @@ export default function SolutionPage() {
   const slug = params.slug as string;
   const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
   const [solution, setSolution] = useState<BadgeSolution | null | undefined>(undefined);
+  const [activeLabId, setActiveLabId] = useState<string | null>(null);
+
+  // Read URL hash for deep-link to a specific lab
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) setActiveLabId(hash.toUpperCase());
+  }, []);
 
   useEffect(() => {
     const ok = isProfileTracked();
@@ -409,7 +432,11 @@ export default function SolutionPage() {
           {solution.labs.length} Lab{solution.labs.length !== 1 ? "s" : ""} in this Badge
         </h2>
         {solution.labs.map((lab) => (
-          <LabCard key={lab.labId} lab={lab} />
+          <LabCard
+            key={lab.labId}
+            lab={lab}
+            active={lab.labId.toUpperCase() === activeLabId}
+          />
         ))}
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, BookOpen } from "lucide-react";
 import {
   AccountSwitcher,
   DashboardNavLink,
@@ -10,9 +10,11 @@ import {
   AddProfileNavLink,
 } from "@/components/AccountSwitcher";
 import { useTheme } from "@/components/ThemeProvider";
+import { SolutionPickerModal } from "@/components/SolutionPicker";
 
 export default function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [solutionsOpen, setSolutionsOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const { theme, toggle, hackerMode, toggleHackerMode } = useTheme();
 
@@ -56,6 +58,7 @@ export default function NavBar() {
   const close = () => setIsOpen(false);
 
   return (
+    <>
     <nav className="sticky top-0 z-50 glass border-b border-line/60" ref={drawerRef}>
       {/* ── Main bar ─────────────────────────────────────────────── */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
@@ -99,6 +102,14 @@ export default function NavBar() {
             Prep Guide
           </Link>
           <AccountSwitcher />
+          {/* Lab Solutions picker */}
+          <button
+            onClick={() => setSolutionsOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-cyan/25 bg-cyan/8 text-cyan text-[11px] font-semibold hover:bg-cyan hover:text-void transition-all duration-200 active:scale-95 whitespace-nowrap"
+          >
+            <BookOpen className="w-3 h-3" />
+            Lab Solutions
+          </button>
           {/* Hacker Mode button */}
           <button
             onClick={toggleHackerMode}
@@ -167,6 +178,13 @@ export default function NavBar() {
           <NavDrawerLink href="/facilitator-guide" onClick={close} accent="cyan">
             Prep Guide
           </NavDrawerLink>
+          <button
+            onClick={() => { setSolutionsOpen(true); close(); }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-cyan hover:bg-cyan/8 transition-all duration-150 w-full text-left"
+          >
+            <BookOpen className="w-4 h-4" />
+            Lab Solutions
+          </button>
 
           {/* Account switcher — full width variant */}
           <div className="mt-3 pt-3 border-t border-line/40">
@@ -200,6 +218,8 @@ export default function NavBar() {
         </div>
       </div>
     </nav>
+    <SolutionPickerModal open={solutionsOpen} onClose={() => setSolutionsOpen(false)} />
+    </>
   );
 }
 

@@ -1,8 +1,11 @@
+"use client";
+
 import { Gamepad2, Brain, Wrench, ShieldCheck, Sparkles, Circle, ExternalLink, Calendar, BookOpen, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { Badge } from "@/lib/scraper";
 import { slugify } from "@/lib/slugify";
 import { SOLUTIONS } from "@/lib/solutions";
+import { SolutionPickerButton } from "@/components/SolutionPicker";
 
 const TYPE_CONFIG: Record<
   Badge["type"],
@@ -118,6 +121,7 @@ export function BadgeGrid({ badges }: { badges: Badge[] }) {
             {/* Solution button — only for skill / game badges */}
             {showSolutionBtn && (
               solutionExists ? (
+                // Direct link if this exact badge has a solution entry
                 <Link
                   href={`/solution/${solutionSlug}`}
                   className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] font-semibold transition-all
@@ -132,14 +136,8 @@ export function BadgeGrid({ badges }: { badges: Badge[] }) {
                   Solution
                 </Link>
               ) : (
-                <div
-                  className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] font-medium
-                    border border-white/8 text-mist-muted/50 cursor-default select-none"
-                  title="Solution coming soon"
-                >
-                  <BookOpen className="w-3 h-3" />
-                  Coming Soon
-                </div>
+                // Show picker button for all other game/skill badges
+                <SolutionPickerButton label="Solutions" />
               )
             )}
           </div>
@@ -148,4 +146,3 @@ export function BadgeGrid({ badges }: { badges: Badge[] }) {
     </div>
   );
 }
-
