@@ -343,7 +343,17 @@ export function classifyBadgeTitle(
     "skill badge", "get started with", "build", "implement", "perform", 
     "create", "manage", "deploy", "configure", "secure", "integrate", 
     "analyze", "optimize", "store", "process", "develop", "automate", 
-    "automating", "architect", "architecting", "explore"
+    "automating", "architect", "architecting", "explore",
+    "orchestrate", "organize", "govern", "prepare", "derive", "use", 
+    "using", "privileged", "mitigate", "discover", "monitoring", "monitor",
+    "prevent", "protect", "detect", "insights", "fundamental", "fundamentals", 
+    "basics", "principles", "foundation", "foundations", "security", "network", 
+    "networking", "administer", "administration", "managing", "deploying", 
+    "configuring", "securing", "integrating", "analyzing", "optimizing", 
+    "storing", "processing", "developing", "migrating", "migration", "engineer", 
+    "engineering", "delivery", "infrastructure", "troubleshoot", "troubleshooting", 
+    "design", "designing", "support", "supporting", "scale", "scaling", "mesh", 
+    "safe spaces", "set up", "setup", "streaming", "analytics", "log", "logging"
   ];
   if (titleIncludesAny(t, SKILL_KEYWORDS)) {
     return { category: "skill_badge", ruleId: "skill-badge-keyword", lowConfidence: false };
@@ -459,6 +469,7 @@ export interface ArcadeResult {
   workMeetsPlay: WorkMeetsPlayResult;
   tiers: TierResult[];
   swag: SwagEligibility;
+  isBonusMilestoneCompleted: boolean;
 }
 
 function emptyBreakdown(): ArcadeBreakdown {
@@ -649,18 +660,27 @@ export function calculateArcadeResult(
   }
 
   // Bonus milestone points (10 pts)
-  const targetGearBadges = [
-    "gear",
+  const hasGearBadge = classifiedBadges.some(b => {
+    const title = b.title.toLowerCase();
+    return title.includes("arcade - gear") || title.includes("arcade-gear") || title.includes("arcade gear");
+  });
+
+  const requiredGearSkillBadges = [
     "create your first gemini enterprise application",
     "engineer ai agents with agent development kit",
     "deploy multi-agent architectures",
     "orchestrate multi-agent workflows with gemini enterprise"
   ];
-  const hasGearBadge = classifiedBadges.some(b => {
-    const title = b.title.toLowerCase();
-    return targetGearBadges.some(tb => title.includes(tb));
+  const hasAllGearSkillBadges = requiredGearSkillBadges.every(reqTitle => {
+    return classifiedBadges.some(b => b.title.toLowerCase().includes(reqTitle));
   });
-  const isBonusMilestoneCompleted = bonusMilestoneCompleted ?? hasGearBadge;
+
+  const isMilestone1Completed = milestones.some(m => m.id === 1 && m.achieved);
+
+  const isBonusMilestoneCompleted = bonusMilestoneCompleted !== undefined
+    ? bonusMilestoneCompleted
+    : (hasGearBadge && hasAllGearSkillBadges && isMilestone1Completed);
+
   const bonusMilestonePoints = isBonusMilestoneCompleted ? 10 : 0;
 
   const bonusPoints = milestoneBonus + bonusMilestonePoints;
@@ -680,5 +700,6 @@ export function calculateArcadeResult(
     workMeetsPlay,
     tiers,
     swag,
+    isBonusMilestoneCompleted,
   };
 }

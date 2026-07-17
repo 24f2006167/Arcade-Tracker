@@ -48,10 +48,17 @@ export async function POST(req: NextRequest) {
     });
     if (snapErr) throw snapErr;
 
+    const arcadeResult = calculateArcadeResult(data.badges);
     const bonusMilestone = await fetchBonusMilestoneInfo(data.badges);
     const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
-    const isBonusMilestoneCompleted = bonusMilestoneAnnounced && bonusMilestone.completed;
-    const arcadeResult = calculateArcadeResult(data.badges, undefined, isBonusMilestoneCompleted);
+    
+    if (bonusMilestoneAnnounced) {
+      bonusMilestone.completed = arcadeResult.isBonusMilestoneCompleted;
+      bonusMilestone.pointsAwarded = arcadeResult.isBonusMilestoneCompleted ? 10 : 0;
+    } else {
+      bonusMilestone.completed = false;
+      bonusMilestone.pointsAwarded = 0;
+    }
 
     return NextResponse.json({ profileId, ...data, arcadeResult, bonusMilestone });
   } catch (err) {
@@ -90,10 +97,17 @@ export async function GET(req: NextRequest) {
   }
 
   const latest = snapshots?.[snapshots.length - 1];
+  const arcadeResult = calculateArcadeResult(latest?.badges ?? []);
   const bonusMilestone = await fetchBonusMilestoneInfo(latest?.badges ?? []);
   const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
-  const isBonusMilestoneCompleted = bonusMilestoneAnnounced && bonusMilestone.completed;
-  const arcadeResult = calculateArcadeResult(latest?.badges ?? [], undefined, isBonusMilestoneCompleted);
+  
+  if (bonusMilestoneAnnounced) {
+    bonusMilestone.completed = arcadeResult.isBonusMilestoneCompleted;
+    bonusMilestone.pointsAwarded = arcadeResult.isBonusMilestoneCompleted ? 10 : 0;
+  } else {
+    bonusMilestone.completed = false;
+    bonusMilestone.pointsAwarded = 0;
+  }
 
   return NextResponse.json({ profile, snapshots, arcadeResult, bonusMilestone });
 }

@@ -87,13 +87,20 @@ export async function GET(req: NextRequest) {
 
       const latest = snapshots?.[snapshots.length - 1];
       const latestBadges = (latest?.badges as Badge[]) ?? [];
+      const arcadeResult = calculateArcadeResult(latestBadges);
       const bonusMilestone = await fetchBonusMilestoneInfo(latestBadges);
       const bonusMilestoneAnnounced =
         !!(bonusMilestone?.description &&
           bonusMilestone.description.length > 100 &&
           !bonusMilestone.description.includes("will be posted here soon"));
-      const isBonusMilestoneCompleted = bonusMilestoneAnnounced && bonusMilestone.completed;
-      const arcadeResult = calculateArcadeResult(latestBadges, undefined, isBonusMilestoneCompleted);
+      
+      if (bonusMilestoneAnnounced) {
+        bonusMilestone.completed = arcadeResult.isBonusMilestoneCompleted;
+        bonusMilestone.pointsAwarded = arcadeResult.isBonusMilestoneCompleted ? 10 : 0;
+      } else {
+        bonusMilestone.completed = false;
+        bonusMilestone.pointsAwarded = 0;
+      }
 
       send("snapshot", {
         profile,
@@ -144,13 +151,20 @@ export async function GET(req: NextRequest) {
             }
 
             // Recompute arcade points with fresh data
+            const freshArcade = calculateArcadeResult(fresh.badges);
             const freshBonus = await fetchBonusMilestoneInfo(fresh.badges);
             const freshBonusAnnounced =
               !!(freshBonus?.description &&
                 freshBonus.description.length > 100 &&
                 !freshBonus.description.includes("will be posted here soon"));
-            const isFreshBonusDone = freshBonusAnnounced && freshBonus.completed;
-            const freshArcade = calculateArcadeResult(fresh.badges, undefined, isFreshBonusDone);
+            
+            if (freshBonusAnnounced) {
+              freshBonus.completed = freshArcade.isBonusMilestoneCompleted;
+              freshBonus.pointsAwarded = freshArcade.isBonusMilestoneCompleted ? 10 : 0;
+            } else {
+              freshBonus.completed = false;
+              freshBonus.pointsAwarded = 0;
+            }
 
             // Reload snapshots from DB to get the full history
             const { data: freshSnapshots } = await db

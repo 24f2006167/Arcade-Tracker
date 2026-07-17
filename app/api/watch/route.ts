@@ -39,13 +39,7 @@ export async function GET() {
         .maybeSingle();
 
       const badges = (latest?.badges as Badge[]) ?? [];
-      const bonusMilestone = await fetchBonusMilestoneInfo(badges);
-      const isBonusDone =
-        !!bonusMilestone?.description &&
-        bonusMilestone.description.length > 100 &&
-        !bonusMilestone.description.includes("will be posted here soon") &&
-        bonusMilestone.completed;
-      const arcade = calculateArcadeResult(badges, undefined, isBonusDone);
+      const arcade = calculateArcadeResult(badges);
 
       // Count by category
       const gameBadges = arcade.classifiedBadges.filter(

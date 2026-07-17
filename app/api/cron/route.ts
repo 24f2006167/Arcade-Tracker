@@ -113,13 +113,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Compute arcade points for the report
-        const bonusMilestone = await fetchBonusMilestoneInfo(fresh.badges);
-        const isBonusDone =
-          !!bonusMilestone?.description &&
-          bonusMilestone.description.length > 100 &&
-          !bonusMilestone.description.includes("will be posted here soon") &&
-          bonusMilestone.completed;
-        const arcade = calculateArcadeResult(fresh.badges, undefined, isBonusDone);
+        const arcade = calculateArcadeResult(fresh.badges);
 
         // Find which specific badges are new
         const prevTitles = new Set(
@@ -141,13 +135,7 @@ export async function GET(req: NextRequest) {
         });
       } else {
         // No change
-        const bonusMilestone = await fetchBonusMilestoneInfo(fresh.badges);
-        const isBonusDone =
-          !!bonusMilestone?.description &&
-          bonusMilestone.description.length > 100 &&
-          !bonusMilestone.description.includes("will be posted here soon") &&
-          bonusMilestone.completed;
-        const arcade = calculateArcadeResult(fresh.badges, undefined, isBonusDone);
+        const arcade = calculateArcadeResult(fresh.badges);
 
         results.push({
           publicId: profile.public_id,

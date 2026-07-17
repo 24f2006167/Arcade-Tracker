@@ -46,11 +46,27 @@ function classifyBadge(title: string): Badge["type"] {
     return "game";
   if (t.includes("certified") || t.includes("certification"))
     return "certification";
+
+  const SKILL_KEYWORDS = [
+    "skill badge", "get started with", "build", "implement", "perform", 
+    "create", "manage", "deploy", "configure", "secure", "integrate", 
+    "analyze", "optimize", "store", "process", "develop", "automate", 
+    "automating", "architect", "architecting", "explore",
+    "orchestrate", "organize", "govern", "prepare", "derive", "use", 
+    "using", "privileged", "mitigate", "discover", "monitoring", "monitor",
+    "prevent", "protect", "detect", "insights", "fundamental", "fundamentals", 
+    "basics", "principles", "foundation", "foundations", "security", "network", 
+    "networking", "administer", "administration", "managing", "deploying", 
+    "configuring", "securing", "integrating", "analyzing", "optimizing", 
+    "storing", "processing", "developing", "migrating", "migration", "engineer", 
+    "engineering", "delivery", "infrastructure", "troubleshoot", "troubleshooting", 
+    "design", "designing", "support", "supporting", "scale", "scaling", "mesh", 
+    "safe spaces", "set up", "setup", "streaming", "analytics", "log", "logging"
+  ];
   if (
-    t.includes("skill badge") ||
-    t.includes("get started with") ||
-    t.includes("build and") ||
-    t.includes("level ")
+    SKILL_KEYWORDS.some((kw) => t.includes(kw)) ||
+    t.includes("level ") ||
+    t.includes("build and")
   )
     return "skill";
   return "other";
@@ -192,24 +208,23 @@ To earn an EXTRA 10 Bonus points:
 3. Build your first AI Agent using Vertex AI (Agent Platform) and grant permission to the verifier email address.
 4. Submit project details (Unique Project Name and Unique Billing ID) for verification.`;
 
-  let completed = false;
-  let completedBadgeTitle = "";
-  const targetBadges = [
-    "gear",
+  const hasGearBadge = userBadges.some(b => {
+    const t = b.title.toLowerCase();
+    return t.includes("arcade - gear") || t.includes("arcade-gear") || t.includes("arcade gear");
+  });
+
+  const requiredGearSkillBadges = [
     "create your first gemini enterprise application",
     "engineer ai agents with agent development kit",
     "deploy multi-agent architectures",
     "orchestrate multi-agent workflows with gemini enterprise"
   ];
-  for (const b of userBadges) {
-    if (!b.title) continue;
-    const lowerTitle = b.title.toLowerCase();
-    if (targetBadges.some(tb => lowerTitle.includes(tb))) {
-      completed = true;
-      completedBadgeTitle = b.title;
-      break;
-    }
-  }
+  const hasAllGearSkillBadges = requiredGearSkillBadges.every(reqTitle => {
+    return userBadges.some(b => b.title.toLowerCase().includes(reqTitle));
+  });
+
+  const completed = hasGearBadge && hasAllGearSkillBadges;
+  const completedBadgeTitle = completed ? "Arcade - GEAR" : "";
 
   return {
     title: "Bonus Milestone",
