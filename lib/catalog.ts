@@ -474,7 +474,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     "title": "Get Started with Eventarc",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/727"
+    "url": "https://www.cloudskillsboost.google/course_templates/727",
+    "aliases": ["Build Event-Driven Applications with Eventarc"]
   },
   {
     "title": "Build Real World AI Applications with Gemini and Imagen",
