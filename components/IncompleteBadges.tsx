@@ -165,7 +165,20 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
   const effectiveGames: CatalogBadge[] =
     liveGames !== null ? liveGames : staticActive;
 
-  const completedNormalized = new Set(completedBadges.map((b) => normalize(b.title)));
+  const isSkillOrTriviaCompleted = (cb: CatalogBadge) => {
+    const key = normalize(cb.title);
+    return completedBadges.some((b) => {
+      const ek = normalize(b.title);
+      const exactOrPrefixMatches = ek === key || ek.startsWith(key) || key.startsWith(ek);
+      if (exactOrPrefixMatches) return true;
+      
+      // Substring fallback for longer titles to handle prefixes/suffixes (e.g. "[Partner]" or "Challenge Lab")
+      if (key.length > 15 && (ek.includes(key) || key.includes(ek))) {
+        return true;
+      }
+      return false;
+    });
+  };
 
   /* Smart keyword prefix match with date validation: "Arcade Trail" matches "Arcade Trail: Data Engineering…" only if earned during the game's active month */
   const isGameCompleted = (game: CatalogBadge) => {
@@ -217,7 +230,7 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
 
   /* ── Skill / trivia incomplete badges (exclude "game" type since games are handled at the top) ── */
   const incompleteSkills = CATALOG_BADGES.filter(
-    (cb) => cb.type !== "game" && !completedNormalized.has(normalize(cb.title)) && !isExpired(cb.endDate)
+    (cb) => cb.type !== "game" && !isSkillOrTriviaCompleted(cb) && !isExpired(cb.endDate)
   );
   const searched = incompleteSkills.filter((b) =>
     b.title.toLowerCase().includes(search.toLowerCase())
