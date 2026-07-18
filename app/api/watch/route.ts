@@ -22,7 +22,19 @@ export async function GET() {
 
   const { data: profiles, error } = await db
     .from("profiles")
-    .select("id, public_id, display_name");
+    .select(`
+      id,
+      public_id,
+      display_name,
+      snapshots (
+        total_badges,
+        badges,
+        fetched_at,
+        total_points
+      )
+    `)
+    .order("fetched_at", { referencedTable: "snapshots", ascending: false })
+    .limit(1, { foreignTable: "snapshots" });
 
   if (error || !profiles) {
     return NextResponse.json({ error: "Failed to load profiles" }, { status: 500 });
@@ -30,13 +42,7 @@ export async function GET() {
 
   const statuses = await Promise.all(
     profiles.map(async (profile) => {
-      const { data: latest } = await db
-        .from("snapshots")
-        .select("total_badges, badges, fetched_at, total_points")
-        .eq("profile_id", profile.id)
-        .order("fetched_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const latest = (profile.snapshots as any)?.[0];
 
       const badges = (latest?.badges as Badge[]) ?? [];
       const arcade = calculateArcadeResult(badges);

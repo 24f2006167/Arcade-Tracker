@@ -47,10 +47,10 @@ export async function GET(req: NextRequest) {
   // Add CRON_SECRET to your .env.local and Vercel env vars.
   // Vercel Cron automatically passes this; manual callers can skip it in dev.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
+  const isDev = process.env.NODE_ENV === "development";
+  if (cronSecret && !isDev) {
     const authHeader = req.headers.get("authorization");
-    const isVercelCron = req.headers.get("x-vercel-cron") === "1";
-    if (!isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
         { error: "Unauthorized — pass Authorization: Bearer <CRON_SECRET>" },
         { status: 401 }

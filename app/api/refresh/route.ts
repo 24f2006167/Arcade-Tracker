@@ -20,6 +20,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
+    // Cooldown check: max one refresh every 5 minutes to prevent abuse
+    const { data: latest } = await db
+      .from("snapshots")
+      .select("fetched_at")
+      .eq("profile_id", profileId)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latest) {
+      const lastFetched = new Date(latest.fetched_at).getTime();
+      const diffMin = (Date.now() - lastFetched) / (1000 * 60);
+      if (diffMin < 5) {
+        const remainingSec = Math.ceil((5 - diffMin) * 60);
+        return NextResponse.json(
+          { error: `Profile was refreshed recently. Please wait ${remainingSec} seconds before refreshing again.` },
+          { status: 429 }
+        );
+      }
+    }
+
     const fresh = await fetchPublicProfile(profile.public_id);
 
     await db.from("snapshots").insert({

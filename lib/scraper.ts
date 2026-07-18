@@ -78,7 +78,7 @@ function classifyBadge(title: string): Badge["type"] {
  *   - total skills points (shown as "N points" in bold)
  *   - list of badges directly with their titles, images, and dates.
  */
-function parseProfileHtml(html: string, publicId: string): {
+function parseProfileHtml(html: string): {
   name: string;
   totalPoints: number;
   badges: Badge[];
@@ -161,7 +161,7 @@ export async function fetchPublicProfile(publicId: string): Promise<ProfileData>
   }
 
   const html = await res.text();
-  const { name, totalPoints, badges } = parseProfileHtml(html, publicId);
+  const { name, totalPoints, badges } = parseProfileHtml(html);
 
   const lowerName = name.toLowerCase();
   if (lowerName === "google skills" || lowerName === "google cloud skills boost" || lowerName === "skills") {

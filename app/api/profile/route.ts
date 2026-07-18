@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchPublicProfile, extractPublicIdFromUrl, fetchBonusMilestoneInfo } from "@/lib/scraper";
+import type { Badge } from "@/lib/scraper";
 import { getServiceClient } from "@/lib/supabase";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
 
@@ -11,15 +12,58 @@ export async function POST(req: NextRequest) {
     }
 
     const publicId = extractPublicIdFromUrl(input);
-    const data = await fetchPublicProfile(publicId);
-
     const db = getServiceClient();
 
+    // Check if profile already exists in the database
     const { data: existing } = await db
       .from("profiles")
-      .select("id")
+      .select("id, display_name")
       .eq("public_id", publicId)
       .maybeSingle();
+
+    if (existing) {
+      // Check if we have a recent snapshot (within 5 minutes)
+      const { data: latest } = await db
+        .from("snapshots")
+        .select("total_badges, badges, total_points, fetched_at")
+        .eq("profile_id", existing.id)
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latest) {
+        const lastFetched = new Date(latest.fetched_at).getTime();
+        const diffMin = (Date.now() - lastFetched) / (1000 * 60);
+        if (diffMin < 5) {
+          // Return cached data immediately without scraping
+          const arcadeResult = calculateArcadeResult(latest.badges as Badge[]);
+          const bonusMilestone = await fetchBonusMilestoneInfo(latest.badges as Badge[]);
+          const bonusMilestoneAnnounced = !!(bonusMilestone?.description && bonusMilestone.description.length > 100 && !bonusMilestone.description.includes("will be posted here soon"));
+          
+          if (bonusMilestoneAnnounced) {
+            bonusMilestone.completed = arcadeResult.isBonusMilestoneCompleted;
+            bonusMilestone.pointsAwarded = arcadeResult.isBonusMilestoneCompleted ? 10 : 0;
+          } else {
+            bonusMilestone.completed = false;
+            bonusMilestone.pointsAwarded = 0;
+          }
+
+          return NextResponse.json({
+            profileId: existing.id,
+            name: existing.display_name,
+            publicId,
+            totalPoints: latest.total_points,
+            totalBadges: latest.total_badges,
+            badges: latest.badges,
+            arcadeResult,
+            bonusMilestone,
+          });
+        }
+      }
+    }
+
+    // Cache miss or new profile: perform scrape
+    const data = await fetchPublicProfile(publicId);
 
     let profileId = existing?.id as string | undefined;
 

@@ -8,7 +8,22 @@ export async function GET() {
   try {
     const db = getServiceClient();
 
-    const { data: profiles, error } = await db.from("profiles").select("id, public_id, display_name");
+    // Fetch profiles along with their latest snapshots in a single nested join query to prevent N+1 queries
+    const { data: profiles, error } = await db
+      .from("profiles")
+      .select(`
+        id,
+        public_id,
+        display_name,
+        snapshots (
+          total_badges,
+          badges,
+          fetched_at
+        )
+      `)
+      .order("fetched_at", { referencedTable: "snapshots", ascending: false })
+      .limit(1, { foreignTable: "snapshots" });
+
     if (error) throw error;
     if (!profiles?.length) return NextResponse.json({ leaderboard: [] });
 
@@ -17,14 +32,7 @@ export async function GET() {
 
     const rows = await Promise.all(
       profiles.map(async (p) => {
-        const { data: latest } = await db
-          .from("snapshots")
-          .select("total_badges, badges, fetched_at")
-          .eq("profile_id", p.id)
-          .order("fetched_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
+        const latest = (p.snapshots as any)?.[0];
         const badges = (latest?.badges as Badge[]) ?? [];
         const userBonusMilestone = await fetchBonusMilestoneInfo(badges);
         const isBonusMilestoneCompleted = bonusMilestoneAnnounced && userBonusMilestone.completed;

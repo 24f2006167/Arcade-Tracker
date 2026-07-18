@@ -103,6 +103,13 @@ export default function DashboardPage() {
     });
   const [lastRefreshedText, setLastRefreshedText] = useState<string>("June 29, 2026 at 8:08 AM UTC");
 
+  // ── Access check: verify the user owns this profile ────────────────────
+  useEffect(() => {
+    if (!isOwn) {
+      setError("Access denied: You do not own this profile.");
+    }
+  }, [isOwn]);
+
   // ── Helper: dismiss a toast by id ───────────────────────────────────────
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -471,7 +478,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan pulse-glow" />
-              {isOwn ? `Hello, ${data.profile.display_name} 👋` : `Viewing ${data.profile.display_name}'s Profile`}
+              Hello, {data.profile.display_name} 👋
             </span>
             <h1 className="font-display text-3xl font-semibold text-mist">
               {points} Arcade Points

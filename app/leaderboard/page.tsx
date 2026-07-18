@@ -162,18 +162,18 @@ export default function LeaderboardPage() {
                       {row.points}
                     </span>
 
-                    <Link
-                      href={`/dashboard/${row.profileId}`}
-                      className={`shrink-0 inline-flex items-center gap-1 text-[10px] rounded-lg px-2.5 py-1.5 transition-all ${
-                        isOwn
-                          ? "text-cyan border border-cyan/30 hover:bg-cyan/10"
-                          : "text-mist-muted hover:text-mist border border-white/10 hover:bg-white/5"
-                      }`}
-                      title={isOwn ? "View your dashboard" : "View player dashboard"}
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span className="hidden sm:inline">Dashboard</span>
-                    </Link>
+                    {isOwn ? (
+                      <Link
+                        href={`/dashboard/${row.profileId}`}
+                        className="shrink-0 inline-flex items-center gap-1 text-[10px] text-cyan border border-cyan/30 rounded-lg px-2.5 py-1.5 hover:bg-cyan/10 transition-all"
+                        title="View your dashboard"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                      </Link>
+                    ) : (
+                      <span className="shrink-0 w-[68px] sm:w-[84px]" />
+                    )}
                   </div>
                 );
               })}
