@@ -14,6 +14,7 @@ export interface CatalogBadge {
   startDate?: string;
   /** ISO date when this game/badge expires and can no longer be earned */
   endDate?: string;
+  aliases?: string[];
 }
 
 /** Game catalog with access codes and images from go.cloudskillsboost.google/arcade */
@@ -164,7 +165,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     title: "Get Started with Dataplex",
     type: "skill",
-    url: "https://www.cloudskillsboost.google/course_templates/726"
+    url: "https://www.cloudskillsboost.google/course_templates/726",
+    aliases: ["Organize and Govern Data with Knowledge Catalog"]
   },
   {
     title: "Cloud Architecture: Design, Implement, and Manage",
@@ -174,7 +176,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     title: "App Engine: 3 Ways",
     type: "skill",
-    url: "https://www.cloudskillsboost.google/course_templates/671"
+    url: "https://www.cloudskillsboost.google/course_templates/671",
+    aliases: ["Deploy and Manage Applications on Google App Engine"]
   },
   {
     title: "Build LookML Objects in Looker",
@@ -259,7 +262,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     title: "Get Started with Cloud Storage",
     type: "skill",
-    url: "https://www.cloudskillsboost.google/course_templates/725"
+    url: "https://www.cloudskillsboost.google/course_templates/725",
+    aliases: ["Implement Cloud Storage and Data Protection Solutions"]
   },
   {
     title: "Manage Kubernetes in Google Cloud",
@@ -294,7 +298,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     "title": "Get Started with Pub/Sub",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/728"
+    "url": "https://www.cloudskillsboost.google/course_templates/728",
+    "aliases": ["Implement Event-Driven Messaging and Automation Workflows"]
   },
   {
     "title": "Analyze BigQuery Data in Connected Sheets",
@@ -339,7 +344,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     "title": "Using the Google Cloud Speech API",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/756"
+    "url": "https://www.cloudskillsboost.google/course_templates/756",
+    "aliases": ["Implement Speech and Language Solutions with Pre-trained APIs"]
   },
   {
     "title": "Create a Streaming Data Lake on Cloud Storage",
@@ -374,12 +380,14 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     "title": "Get Started with Google Workspace Tools",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/676"
+    "url": "https://www.cloudskillsboost.google/course_templates/676",
+    "aliases": ["Implement Cloud Collaboration and Productivity Workflows"]
   },
   {
     "title": "Cloud Run Functions: 3 Ways",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/696"
+    "url": "https://www.cloudskillsboost.google/course_templates/696",
+    "aliases": ["Build Serverless Applications with Cloud Run Functions"]
   },
   {
     "title": "Create and Manage Cloud Spanner Instances",
@@ -424,7 +432,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     "title": "Get Started with API Gateway",
     "type": "skill",
-    "url": "https://www.cloudskillsboost.google/course_templates/662"
+    "url": "https://www.cloudskillsboost.google/course_templates/662",
+    "aliases": ["Deploy and Secure Serverless APIs with API Gateway"]
   },
   {
     "title": "Protect Cloud Traffic with Chrome Enterprise Premium Security",

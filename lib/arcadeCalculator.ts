@@ -292,8 +292,8 @@ export function classifyBadgeTitle(
 
   // 0. Catalog Lookup (High confidence matching from catalog.ts)
   const catalogMatch = 
-    CATALOG_BADGES.find((b) => b.title.toLowerCase().trim() === t) ||
-    ARCADE_GAMES.find((b) => b.title.toLowerCase().trim() === t);
+    CATALOG_BADGES.find((b) => b.title.toLowerCase().trim() === t || b.aliases?.some(a => a.toLowerCase().trim() === t)) ||
+    ARCADE_GAMES.find((b) => b.title.toLowerCase().trim() === t || b.aliases?.some(a => a.toLowerCase().trim() === t));
 
   if (catalogMatch) {
     if (catalogMatch.type === "skill") {

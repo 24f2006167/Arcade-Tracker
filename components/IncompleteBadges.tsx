@@ -166,17 +166,19 @@ export function IncompleteBadges({ completedBadges }: IncompleteBadgesProps) {
     liveGames !== null ? liveGames : staticActive;
 
   const isSkillOrTriviaCompleted = (cb: CatalogBadge) => {
-    const key = normalize(cb.title);
+    const keys = [cb.title, ...(cb.aliases || [])].map((t) => normalize(t));
     return completedBadges.some((b) => {
       const ek = normalize(b.title);
-      const exactOrPrefixMatches = ek === key || ek.startsWith(key) || key.startsWith(ek);
-      if (exactOrPrefixMatches) return true;
-      
-      // Substring fallback for longer titles to handle prefixes/suffixes (e.g. "[Partner]" or "Challenge Lab")
-      if (key.length > 15 && (ek.includes(key) || key.includes(ek))) {
-        return true;
-      }
-      return false;
+      return keys.some((key) => {
+        const exactOrPrefixMatches = ek === key || ek.startsWith(key) || key.startsWith(ek);
+        if (exactOrPrefixMatches) return true;
+        
+        // Substring fallback for longer titles to handle prefixes/suffixes (e.g. "[Partner]" or "Challenge Lab")
+        if (key.length > 15 && (ek.includes(key) || key.includes(ek))) {
+          return true;
+        }
+        return false;
+      });
     });
   };
 
