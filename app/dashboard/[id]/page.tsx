@@ -86,10 +86,10 @@ export default function DashboardPage() {
   const { theme, hackerMode, isTransitioning, isTurningOff, completeTransition } = useTheme();
   const isLight = theme === "light";
   const params = useParams<{ id: string }>();
+  const isOwn = isOwnedProfile(params.id);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
   // SSE live connection state
   const [liveStatus, setLiveStatus] = useState<"connecting" | "live" | "reconnecting" | "error">("connecting");
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
@@ -107,6 +107,14 @@ export default function DashboardPage() {
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  // ── Initial HTTP fetch (fast fallback so data shows immediately) ────────
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/profile?id=${params.id}`);
+    const json = await res.json();
+    if (!res.ok) { setError(json.error || "Failed to load profile"); return; }
+    setData(json);
+  }, [params.id]);
 
   // ── Persist profile to localStorage whenever data changes ───────────────
   useEffect(() => {
@@ -146,24 +154,12 @@ export default function DashboardPage() {
 
   // ── Initial HTTP fetch (fast fallback so data shows immediately) ────────
   useEffect(() => {
-    const owned = isOwnedProfile(params.id);
-    setAccessGranted(owned);
-    if (!owned) return;
-
-    // Load data via regular HTTP immediately so we don't wait for SSE snapshot
-    fetch(`/api/profile?id=${params.id}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.profile) {
-          setData(json);
-        }
-      })
-      .catch(() => { /* SSE snapshot will cover this */ });
-  }, [params.id]);
+    load();
+  }, [params.id, load]);
 
   // ── SSE stream subscription ──────────────────────────────────────────────
   useEffect(() => {
-    if (!isOwnedProfile(params.id)) return;
+    if (!isOwn) return;
 
     let es: EventSource | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -245,12 +241,6 @@ export default function DashboardPage() {
   }, [params.id, dismissToast]);
 
   // ── Manual refresh (force-scrapes skills.google immediately) ────────────
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/profile?id=${params.id}`);
-    const json = await res.json();
-    if (!res.ok) { setError(json.error || "Failed to load profile"); return; }
-    setData(json);
-  }, [params.id]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -275,43 +265,7 @@ export default function DashboardPage() {
     return <p className="text-pink text-sm text-center py-20">{error}</p>;
   }
 
-  // Show a lock screen if the profile doesn't belong to this user
-  if (accessGranted === false) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-8 py-28 text-center">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-pink/20 blur-2xl scale-150" />
-          <div className="relative w-20 h-20 rounded-2xl glass-strong border border-pink/30 flex items-center justify-center">
-            <ShieldX className="w-10 h-10 text-pink" />
-          </div>
-        </div>
-        <div className="space-y-3 max-w-sm">
-          <h1 className="font-display text-2xl font-semibold text-mist">Access Denied</h1>
-          <p className="text-mist-muted text-sm leading-relaxed">
-            This dashboard belongs to another player. You can only view your{" "}
-            <span className="text-mist font-medium">own dashboard</span> after
-            tracking your profile.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan via-violet to-pink text-void text-sm font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Track your own profile
-          </Link>
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass border border-line/40 text-mist text-sm hover:bg-white/10 transition-colors"
-          >
-            Back to Leaderboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (accessGranted === null || !data) {
+  if (!data) {
     return (
       <div className="flex flex-col items-center gap-3 py-24">
         <span className="text-mist-muted text-sm animate-pulse">Loading profile...</span>
@@ -448,50 +402,52 @@ export default function DashboardPage() {
         </Link>
 
         {/* Live connection indicator */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "5px 11px",
-          borderRadius: "20px",
-          fontSize: "11px",
-          fontWeight: 600,
-          background: liveStatus === "live"
-            ? "rgba(34,197,94,0.12)"
-            : liveStatus === "connecting"
-              ? "rgba(251,191,36,0.12)"
-              : "rgba(239,68,68,0.12)",
-          border: liveStatus === "live"
-            ? "1px solid rgba(34,197,94,0.35)"
-            : liveStatus === "connecting"
-              ? "1px solid rgba(251,191,36,0.35)"
-              : "1px solid rgba(239,68,68,0.35)",
-          color: liveStatus === "live" ? "#4ade80" : liveStatus === "connecting" ? "#fbbf24" : "#f87171",
-        }}>
-          {liveStatus === "live" ? (
-            <>
-              <Wifi style={{ width: "12px", height: "12px" }} />
-              <span style={{
-                display: "inline-block",
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#4ade80",
-                animation: "livePulse 2s infinite",
-              }} />
-              Live · checking every 5s
-            </>
-          ) : liveStatus === "connecting" ? (
-            <><RotateCw style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} /> Connecting...</>
-          ) : (
-            <><WifiOff style={{ width: "12px", height: "12px" }} /> Reconnecting...</>
-          )}
-          {lastCheckedAt && liveStatus === "live" && (
-            <span style={{ opacity: 0.6, fontWeight: 400, fontSize: "10px" }}>
-              · checked {Math.round((Date.now() - new Date(lastCheckedAt).getTime()) / 1000)}s ago
-            </span>
-          )}
-        </div>
+        {isOwn && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "5px 11px",
+            borderRadius: "20px",
+            fontSize: "11px",
+            fontWeight: 600,
+            background: liveStatus === "live"
+              ? "rgba(34,197,94,0.12)"
+              : liveStatus === "connecting"
+                ? "rgba(251,191,36,0.12)"
+                : "rgba(239,68,68,0.12)",
+            border: liveStatus === "live"
+              ? "1px solid rgba(34,197,94,0.35)"
+              : liveStatus === "connecting"
+                ? "1px solid rgba(251,191,36,0.35)"
+                : "1px solid rgba(239,68,68,0.35)",
+            color: liveStatus === "live" ? "#4ade80" : liveStatus === "connecting" ? "#fbbf24" : "#f87171",
+          }}>
+            {liveStatus === "live" ? (
+              <>
+                <Wifi style={{ width: "12px", height: "12px" }} />
+                <span style={{
+                  display: "inline-block",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#4ade80",
+                  animation: "livePulse 2s infinite",
+                }} />
+                Live · checking every 5s
+              </>
+            ) : liveStatus === "connecting" ? (
+              <><RotateCw style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} /> Connecting...</>
+            ) : (
+              <><WifiOff style={{ width: "12px", height: "12px" }} /> Reconnecting...</>
+            )}
+            {lastCheckedAt && liveStatus === "live" && (
+              <span style={{ opacity: 0.6, fontWeight: 400, fontSize: "10px" }}>
+                · checked {Math.round((Date.now() - new Date(lastCheckedAt).getTime()) / 1000)}s ago
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <SeasonCountdown />
@@ -515,7 +471,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 text-xs text-mist-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan pulse-glow" />
-              Hello, {data.profile.display_name} 👋
+              {isOwn ? `Hello, ${data.profile.display_name} 👋` : `Viewing ${data.profile.display_name}'s Profile`}
             </span>
             <h1 className="font-display text-3xl font-semibold text-mist">
               {points} Arcade Points
@@ -580,12 +536,43 @@ export default function DashboardPage() {
         {/* Left col: Tier roadmap + Points System */}
         <div className="flex flex-col gap-6">
           <div className="glass-strong rounded-2xl px-6 py-6 space-y-5 rise-in">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <h2 className="font-display text-sm font-semibold text-mist">Swags Tier Progress</h2>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-white/5 pb-3">
+              <div className="space-y-0.5">
+                <h2 className="font-display text-sm font-semibold text-mist">Swags Tier Progress</h2>
+                <p className="text-[10px] text-mist-muted">Live spots tracked from official source</p>
+              </div>
               {lastRefreshedText && (
-                <span className="text-[10px] text-mist-muted sm:text-right">
-                  Refreshed: {lastRefreshedText}
-                </span>
+                <div className="flex flex-col text-[10px] text-mist-muted sm:text-right gap-0.5">
+                  <span>
+                    Refreshed: <span className="text-mist font-medium">{lastRefreshedText}</span>
+                  </span>
+                  {(() => {
+                    try {
+                      const cleanStr = lastRefreshedText.replace(/\s+at\s+/i, " ");
+                      const lastDate = new Date(cleanStr);
+                      if (!isNaN(lastDate.getTime())) {
+                        const nextDate = new Date(lastDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        const datePart = nextDate.toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        });
+                        const timeMatch = lastRefreshedText.match(/at\s+(.+)$/i);
+                        const timePart = timeMatch ? ` at ${timeMatch[1]}` : "";
+                        return (
+                          <span className="text-cyan/95 font-medium">
+                            Next Update: Monday, {datePart}{timePart}
+                          </span>
+                        );
+                      }
+                    } catch (_) {}
+                    return (
+                      <span className="text-cyan/95 font-medium">
+                        Next Update: Every Monday
+                      </span>
+                    );
+                  })()}
+                </div>
               )}
             </div>
             <div className="space-y-4">
@@ -601,6 +588,7 @@ export default function DashboardPage() {
                 const increase = spots ? spots.total - base : 0;
                 const filledCount = spots ? spots.total - spots.left : 0;
                 const filledPct = spots ? Math.round((filledCount / spots.total) * 100) : 0;
+                const remainingPct = spots ? Math.round((spots.left / spots.total) * 100) : 0;
 
                 return (
                   <div key={tier.name} className="space-y-1.5">
@@ -626,24 +614,39 @@ export default function DashboardPage() {
                       />
                     </div>
                     {spots && (
-                      <div className="space-y-1 pt-1 border-t border-white/5 mt-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-mist-muted">
-                          <span>Prize spots remaining:</span>
-                          <span className="font-semibold text-mist">
-                            {spots.left.toLocaleString()} / {spots.total.toLocaleString()}
-                          </span>
+                      <div className="space-y-2 pt-2 border-t border-white/5 mt-2">
+                        {/* Remaining spots progress */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-mist-muted">
+                            <span>Prize spots remaining:</span>
+                            <span className="font-semibold text-mist text-[10px]">
+                              {spots.left.toLocaleString()} / {spots.total.toLocaleString()}{" "}
+                              <span className="text-[9px] text-cyan font-normal ml-1">({remainingPct}% remaining)</span>
+                            </span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan/50 to-violet/50 rounded-full transition-all duration-500"
+                              style={{ width: `${remainingPct}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-mist-muted">
-                          <span>Spots filled:</span>
-                          <span className="font-semibold text-mist text-[10px]">
-                            {filledCount.toLocaleString()} ({filledPct}% filled)
-                          </span>
-                        </div>
-                        <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-0.5">
-                          <div
-                            className="h-full bg-gradient-to-r from-pink/50 to-violet/50 rounded-full transition-all duration-500"
-                            style={{ width: `${filledPct}%` }}
-                          />
+
+                        {/* Spots filled progress */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-mist-muted">
+                            <span>Spots filled:</span>
+                            <span className="font-semibold text-mist text-[10px]">
+                              {filledCount.toLocaleString()} / {spots.total.toLocaleString()}{" "}
+                              <span className="text-[9px] text-pink font-normal ml-1">({filledPct}% filled)</span>
+                            </span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-pink/50 to-violet/50 rounded-full transition-all duration-500"
+                              style={{ width: `${filledPct}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
