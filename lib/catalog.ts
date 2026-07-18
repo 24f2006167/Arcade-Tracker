@@ -232,7 +232,8 @@ export const CATALOG_BADGES: CatalogBadge[] = [
   {
     title: "Build a Data Mesh with Dataplex",
     type: "skill",
-    url: "https://www.cloudskillsboost.google/course_templates/681"
+    url: "https://www.cloudskillsboost.google/course_templates/681",
+    aliases: ["Build a Data Mesh with Knowledge Catalog"]
   },
   {
     title: "Prepare Data for ML APIs on Google Cloud",
