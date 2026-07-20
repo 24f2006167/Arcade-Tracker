@@ -221,6 +221,8 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
     "holi-istic",        // Holi-istic Infrastructures — Holi-themed bonus game (Mar 2026)
     "holi istic",        // alternate spacing variant
     "holistic infra",
+    // Skills At The Pitch — Feb 2026 special game (World Cup themed, 2 Arcade Points)
+    "skills at the pitch",
     // Certification Zone badges appear as Special in arcadecalc (2 pts, not 1 pt cert):
     "certification zone", // e.g. "Google Skills Arcade Certification Zone January 2026"
   ],
@@ -232,8 +234,21 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
   workMeetsPlay: {
     label: "Work Meets Play (Jan-Jun 2026)",
     badgeTitles: [
+      // Matches all WMP monthly badges via substring — covers the full Jan–Jun 2026 series:
+      // Jan: Work Meets Play: A Cloud That Cares
+      // Feb: Work Meets Play: Journeys Made Easy
+      // Mar: Work Meets Play: Metrics in Motion
+      // Apr: Work Meets Play: Skills Spawn
+      // May: Work Meets Play: Expressive Efficiency
+      // Jun: Work Meets Play: Cloud Canvas
       "work meets play",
+      // Explicit title matches for safety (some profiles show short badge names):
       "cloud canvas",
+      "skills spawn",        // Apr 2026 WMP badge
+      "journeys made easy",  // Feb 2026 WMP badge
+      "metrics in motion",   // Mar 2026 WMP badge
+      "expressive efficiency", // May 2026 WMP badge
+      "a cloud that cares",  // Jan 2026 WMP badge
     ],
     requiredCount: 6, // one per month, Jan through Jun 2026
     bonusPoints: 7,
@@ -300,6 +315,11 @@ export function classifyBadgeTitle(
       return { category: "skill_badge", ruleId: "catalog-skill", lowConfidence: false };
     }
     if (catalogMatch.type === "game") {
+      // Check Work Meets Play first (0 pts per badge — bonus on series completion)
+      const isWMP = titleIncludesAny(t, config.workMeetsPlay.badgeTitles);
+      if (isWMP) {
+        return { category: "work_meets_play", ruleId: "catalog-wmp", lowConfidence: false };
+      }
       const isSpecial = config.specialBadgeTitles.some((s) => t.includes(s.toLowerCase()));
       if (isSpecial) {
         return { category: "special_game", ruleId: "catalog-special", lowConfidence: false };

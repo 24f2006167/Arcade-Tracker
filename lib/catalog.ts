@@ -157,10 +157,47 @@ export const ARCADE_GAMES: CatalogBadge[] = [
 
 
 export const CATALOG_BADGES: CatalogBadge[] = [
+  // ── Work Meets Play series (Jan–Jun 2026) ── type=game so they're classified as work_meets_play
   {
     title: "Work Meets Play: Cloud Canvas",
     type: "game",
     url: "https://www.skills.google/games/7227"
+  },
+  {
+    title: "Work Meets Play: Skills Spawn",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
+    aliases: ["Skills Spawn"],
+  },
+  {
+    title: "Work Meets Play: Expressive Efficiency",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
+    aliases: ["Expressive Efficiency"],
+  },
+  {
+    title: "Work Meets Play: Metrics in Motion",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
+    aliases: ["Metrics in Motion"],
+  },
+  {
+    title: "Work Meets Play: Journeys Made Easy",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
+    aliases: ["Journeys Made Easy"],
+  },
+  {
+    title: "Work Meets Play: A Cloud That Cares",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
+    aliases: ["A Cloud That Cares"],
+  },
+  // ── Feb 2026 Special game (World Cup themed) ──
+  {
+    title: "Skills At The Pitch",
+    type: "game",
+    url: "https://www.cloudskillsboost.google/games",
   },
   {
     title: "Get Started with Dataplex",
