@@ -526,6 +526,9 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── Waterfall System Tiers Explainer ──────────────────────────── */}
+      <WaterfallTiers userPoints={points} />
+
       <ScoreboardStrip
         items={[
           { label: "Arcade Points", value: points, accent: "amber", icon: "trophy" },
@@ -533,9 +536,6 @@ export default function DashboardPage() {
           { label: "Snapshots Logged", value: data.snapshots.length, accent: "pink", icon: "history" },
         ]}
       />
-
-      {/* ── Waterfall System Tiers Explainer ──────────────────────────── */}
-      <WaterfallTiers userPoints={points} />
 
       {/* ── Points Distribution Table ─────────────────────────────────── */}
       <PointsDistributionTable
