@@ -692,3 +692,16 @@ html.light .logo-glow-animate {
 .crt-blink-off {
   animation: crt-off 0.35s cubic-bezier(0.19, 1, 0.22, 1) forwards !important;
 }
+
+@keyframes waterfallFlow {
+  0% {
+    stroke-dashoffset: 20;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-waterfall-flow {
+  animation: waterfallFlow 1.2s linear infinite;
+}

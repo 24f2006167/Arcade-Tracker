@@ -10,15 +10,16 @@ import {
 import type { ArcadeWaterfallTier } from "@/lib/arcadeCalculator";
 
 interface WaterfallTiersProps {
-  userPoints: number;
+  userPoints?: number;
 }
 
-export function WaterfallTiers({ userPoints }: WaterfallTiersProps) {
+export function WaterfallTiers({ userPoints = 0 }: WaterfallTiersProps) {
   const { hackerMode, theme } = useTheme();
   const isLight = theme === "light";
   const [expandedTier, setExpandedTier] = useState<string | null>(null);
 
-  const status = getUserWaterfallStatus(userPoints);
+  const safePoints = typeof userPoints === "number" && !isNaN(userPoints) ? Math.max(0, userPoints) : 0;
+  const status = getUserWaterfallStatus(safePoints);
 
   // Icon mapping for tiers
   const tierIcons = {
@@ -151,7 +152,7 @@ export function WaterfallTiers({ userPoints }: WaterfallTiersProps) {
                 {isUserCurrentTier && (
                   <div className="absolute -top-3 left-6 sm:left-8 z-20 flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-cyan to-amber text-void text-[11px] font-bold shadow-lg animate-bounce">
                     <span className="w-2 h-2 rounded-full bg-void animate-ping" />
-                    📍 YOU ARE HERE ({userPoints} PTS)
+                    📍 YOU ARE HERE ({safePoints} PTS)
                   </div>
                 )}
 
@@ -294,10 +295,7 @@ export function WaterfallTiers({ userPoints }: WaterfallTiersProps) {
                       strokeWidth="3"
                       strokeDasharray="6 4"
                       strokeLinecap="round"
-                      className="animate-[dash_1.5s_linear_infinite]"
-                      style={{
-                        animation: "waterfallFlow 1.2s linear infinite",
-                      }}
+                      className="animate-waterfall-flow"
                     />
                     <polygon
                       points="15,22 25,22 20,28"
@@ -332,7 +330,7 @@ export function WaterfallTiers({ userPoints }: WaterfallTiersProps) {
           >
             {status.currentTierId === "below_trooper" && (
               <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber text-void text-[11px] font-bold shadow-md mb-2">
-                📍 YOU ARE HERE ({userPoints} PTS)
+                📍 YOU ARE HERE ({safePoints} PTS)
               </div>
             )}
 
@@ -399,18 +397,6 @@ export function WaterfallTiers({ userPoints }: WaterfallTiersProps) {
           Google Arcade Page →
         </a>
       </div>
-
-      {/* CSS Animation keyframe for chute flow */}
-      <style jsx>{`
-        @keyframes waterfallFlow {
-          0% {
-            stroke-dashoffset: 20;
-          }
-          100% {
-            stroke-dashoffset: 0;
-          }
-        }
-      `}</style>
     </section>
   );
 }
