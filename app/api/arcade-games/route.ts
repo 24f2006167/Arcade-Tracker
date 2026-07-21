@@ -121,12 +121,12 @@ function parseArcadePage(rawHtml: string): ScrapedArcadeData {
     }
   });
 
-  // Fallback if not parsed
+  // Fallback if not parsed — values from July 21 2026 official page
   if (prizeTiers.length === 0) {
     prizeTiers.push(
-      { name: "Arcade Trooper", left: 4837, total: 6000 },
-      { name: "Arcade Ranger", left: 3899, total: 4000 },
-      { name: "Arcade Champion", left: 2979, total: 3000 },
+      { name: "Arcade Trooper", left: 4550, total: 6000 },
+      { name: "Arcade Ranger", left: 3731, total: 4000 },
+      { name: "Arcade Champion", left: 2923, total: 3000 },
       { name: "Arcade Legend", left: 2500, total: 2500 }
     );
   }
@@ -134,7 +134,7 @@ function parseArcadePage(rawHtml: string): ScrapedArcadeData {
   // Parse last refreshed date
   const refreshRegex = /Last refreshed:\s*([^<]+)/i;
   const refreshMatch = decoded.match(refreshRegex);
-  const lastRefreshedText = refreshMatch ? refreshMatch[1].trim() : "June 29, 2026 at 8:08 AM UTC";
+  const lastRefreshedText = refreshMatch ? refreshMatch[1].trim() : "July 21, 2026 at 8:08 AM UTC";
 
   // Find every access code
   const codeRegex = /\b(1q-[a-z0-9-]{4,30})\b/g;
@@ -225,7 +225,8 @@ export async function GET() {
   try {
     const res = await fetch(ARCADE_URL, {
       headers: FETCH_HEADERS,
-      next: { revalidate: 1800 }, // 30 minutes
+      // Always fetch fresh — the page updates weekly and we never want a 30-min stale cache
+      cache: "no-store",
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -245,7 +246,8 @@ export async function GET() {
         },
         {
           headers: {
-            "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
+            // 5-min CDN edge cache — fresh enough without hammering the upstream page on every request
+            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
           },
         }
       );
@@ -264,12 +266,12 @@ export async function GET() {
         count: active.length,
         scrapedAt: new Date().toISOString(),
         prizeTiers: [
-          { name: "Arcade Trooper", left: 4837, total: 6000 },
-          { name: "Arcade Ranger", left: 3899, total: 4000 },
-          { name: "Arcade Champion", left: 2979, total: 3000 },
+          { name: "Arcade Trooper", left: 4550, total: 6000 },
+          { name: "Arcade Ranger", left: 3731, total: 4000 },
+          { name: "Arcade Champion", left: 2923, total: 3000 },
           { name: "Arcade Legend", left: 2500, total: 2500 }
         ],
-        lastRefreshedText: "June 29, 2026 at 8:08 AM UTC",
+        lastRefreshedText: "July 21, 2026 at 8:08 AM UTC",
         error: err instanceof Error ? err.message : String(err),
       },
       {

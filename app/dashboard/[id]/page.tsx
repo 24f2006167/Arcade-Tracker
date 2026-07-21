@@ -96,12 +96,12 @@ export default function DashboardPage() {
   const [toasts, setToasts] = useState<BadgeToast[]>([]);
   const [liveSpots, setLiveSpots] = useState<Record<string, { left: number; total: number }>>(
     {
-      "Arcade Trooper": { total: 6000, left: 4837 },
-      "Arcade Ranger": { total: 4000, left: 3899 },
-      "Arcade Champion": { total: 3000, left: 2979 },
+      "Arcade Trooper": { total: 6000, left: 4550 },
+      "Arcade Ranger": { total: 4000, left: 3731 },
+      "Arcade Champion": { total: 3000, left: 2923 },
       "Arcade Legend": { total: 2500, left: 2500 },
     });
-  const [lastRefreshedText, setLastRefreshedText] = useState<string>("June 29, 2026 at 8:08 AM UTC");
+  const [lastRefreshedText, setLastRefreshedText] = useState<string>("July 21, 2026 at 8:08 AM UTC");
 
   // ── Access check: verify the user owns this profile ────────────────────
   useEffect(() => {
