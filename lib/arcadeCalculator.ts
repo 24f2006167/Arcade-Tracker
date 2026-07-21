@@ -723,3 +723,95 @@ export function calculateArcadeResult(
     isBonusMilestoneCompleted,
   };
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ * WATERFALL SYSTEM TIERS (2026)
+ * ---------------------------------------------------------------------------
+ */
+export const ARCADE_2026_TIERS = [
+  { id: "legend",   name: "Arcade Legend",   minPoints: 120, maxPoints: null, capSlots: 2500 },
+  { id: "champion", name: "Arcade Champion", minPoints: 95,  maxPoints: 119,  capSlots: 3000 },
+  { id: "ranger",   name: "Arcade Ranger",   minPoints: 75,  maxPoints: 94,   capSlots: 4000 },
+  { id: "trooper",  name: "Arcade Trooper",  minPoints: 50,  maxPoints: 74,   capSlots: 6000 },
+] as const;
+
+export type ArcadeWaterfallTier = typeof ARCADE_2026_TIERS[number];
+
+export interface WaterfallUserStatus {
+  currentTierId: "legend" | "champion" | "ranger" | "trooper" | "below_trooper";
+  currentTierName: string;
+  userPoints: number;
+  pointsToNextTier: number;
+  nextTierName: string | null;
+  nextTierMinPoints: number | null;
+  progressPctInTier: number;
+}
+
+export function getUserWaterfallStatus(userPoints: number): WaterfallUserStatus {
+  if (userPoints >= 120) {
+    return {
+      currentTierId: "legend",
+      currentTierName: "Arcade Legend",
+      userPoints,
+      pointsToNextTier: 0,
+      nextTierName: null,
+      nextTierMinPoints: null,
+      progressPctInTier: 100,
+    };
+  }
+  if (userPoints >= 95) {
+    const pointsToNext = 120 - userPoints;
+    const pointsInTier = userPoints - 95;
+    const tierRange = 120 - 95;
+    return {
+      currentTierId: "champion",
+      currentTierName: "Arcade Champion",
+      userPoints,
+      pointsToNextTier: pointsToNext,
+      nextTierName: "Arcade Legend",
+      nextTierMinPoints: 120,
+      progressPctInTier: Math.min(100, Math.max(0, Math.round((pointsInTier / tierRange) * 100))),
+    };
+  }
+  if (userPoints >= 75) {
+    const pointsToNext = 95 - userPoints;
+    const pointsInTier = userPoints - 75;
+    const tierRange = 95 - 75;
+    return {
+      currentTierId: "ranger",
+      currentTierName: "Arcade Ranger",
+      userPoints,
+      pointsToNextTier: pointsToNext,
+      nextTierName: "Arcade Champion",
+      nextTierMinPoints: 95,
+      progressPctInTier: Math.min(100, Math.max(0, Math.round((pointsInTier / tierRange) * 100))),
+    };
+  }
+  if (userPoints >= 50) {
+    const pointsToNext = 75 - userPoints;
+    const pointsInTier = userPoints - 50;
+    const tierRange = 75 - 50;
+    return {
+      currentTierId: "trooper",
+      currentTierName: "Arcade Trooper",
+      userPoints,
+      pointsToNextTier: pointsToNext,
+      nextTierName: "Arcade Ranger",
+      nextTierMinPoints: 75,
+      progressPctInTier: Math.min(100, Math.max(0, Math.round((pointsInTier / tierRange) * 100))),
+    };
+  }
+  // Below Trooper (0 - 49 pts)
+  const pointsToNext = 50 - userPoints;
+  return {
+    currentTierId: "below_trooper",
+    currentTierName: "Unranked",
+    userPoints,
+    pointsToNextTier: pointsToNext,
+    nextTierName: "Arcade Trooper",
+    nextTierMinPoints: 50,
+    progressPctInTier: Math.min(100, Math.max(0, Math.round((userPoints / 50) * 100))),
+  };
+}
+
