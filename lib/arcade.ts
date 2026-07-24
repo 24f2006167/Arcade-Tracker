@@ -137,16 +137,18 @@ export interface Countdown {
   days: number;
   hours: number;
   minutes: number;
+  seconds: number;
   expired: boolean;
 }
 
 export function getCountdown(targetIso: string, now: Date = new Date()): Countdown {
   const totalMs = new Date(targetIso).getTime() - now.getTime();
   if (totalMs <= 0) {
-    return { totalMs: 0, days: 0, hours: 0, minutes: 0, expired: true };
+    return { totalMs: 0, days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
   }
   const days = Math.floor(totalMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor((totalMs / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((totalMs / (1000 * 60)) % 60);
-  return { totalMs, days, hours, minutes, expired: false };
+  const seconds = Math.floor((totalMs / 1000) % 60);
+  return { totalMs, days, hours, minutes, seconds, expired: false };
 }

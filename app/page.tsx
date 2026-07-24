@@ -11,6 +11,7 @@ import {
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { ARCADE_GAMES } from "@/lib/catalog";
 import type { CatalogBadge } from "@/lib/catalog";
+import { SEASON } from "@/lib/arcade";
 import AdBanner from "@/components/AdBanner";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -506,7 +507,7 @@ export default function Home() {
           <StatPill icon={Gamepad2} label="Active games this month" value={activeGames.length || 6} color="bg-pink/15 text-pink" />
           <StatPill icon={Zap} label="Arcade Points available" value={activeGames.length || 6} color="bg-amber/15 text-amber" />
           <StatPill icon={CheckCircle2} label="Skill badge categories" value={87} color="bg-cyan/15 text-cyan" />
-          <StatPill icon={Clock} label="Days until season ends" value={Math.max(0, Math.ceil((new Date("2026-07-31T23:59:59Z").getTime() - Date.now()) / 86400000))} color="bg-violet/15 text-violet" />
+          <StatPill icon={Clock} label="Days until season ends" value={Math.max(0, Math.ceil((new Date(SEASON.facilitatorEnds).getTime() - Date.now()) / 86400000))} color="bg-violet/15 text-violet" />
         </div>
       </section>
 

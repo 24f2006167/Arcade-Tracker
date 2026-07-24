@@ -8,7 +8,7 @@ export function SeasonCountdown() {
   const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -29,7 +29,7 @@ export function SeasonCountdown() {
     <div className="glass rounded-2xl px-6 py-4 flex items-center justify-between gap-4 rise-in">
       <div className="flex items-center gap-2.5">
         {programStarted ? (
-          <Timer className="w-4 h-4 text-pink" />
+          <Timer className="w-4 h-4 text-pink animate-pulse" />
         ) : (
           <Calendar className="w-4 h-4 text-violet" />
         )}
@@ -41,17 +41,19 @@ export function SeasonCountdown() {
             rel="noopener noreferrer"
             className="text-[9px] text-cyan hover:underline mt-0.5"
           >
-            Official Program Website →
+            Official Program Website (Ends Sept 14, 2026) →
           </a>
         </div>
       </div>
       {!countdown.expired && (
-        <div className="flex items-center gap-3 font-score text-[11px] text-mist">
+        <div className="flex items-center gap-2 font-score text-[11px] text-mist">
           <span>{String(countdown.days).padStart(2, "0")}d</span>
           <span className="text-mist-muted">:</span>
           <span>{String(countdown.hours).padStart(2, "0")}h</span>
           <span className="text-mist-muted">:</span>
           <span>{String(countdown.minutes).padStart(2, "0")}m</span>
+          <span className="text-mist-muted">:</span>
+          <span className="text-cyan">{String(countdown.seconds).padStart(2, "0")}s</span>
         </div>
       )}
     </div>
