@@ -19,6 +19,7 @@ import type { ArcadeResult } from "@/lib/arcadeCalculator";
 import type { Badge, BonusMilestoneInfo } from "@/lib/scraper";
 
 import HackerVaultTransition from "@/components/hero/HackerVaultTransition";
+import AdBanner from "@/components/AdBanner";
 
 // Facilitator program date boundaries (IST = UTC+5:30)
 // July 13, 2026 17:00 IST = July 13, 2026 11:30 UTC
@@ -525,6 +526,8 @@ export default function DashboardPage() {
           </p>
         </div>
       )}
+
+      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD || "1234567890"} />
 
       {/* ── Waterfall System Tiers Explainer ──────────────────────────── */}
       <WaterfallTiers userPoints={points} />

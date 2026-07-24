@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Crown, Medal, ExternalLink, Search } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import AdBanner from "@/components/AdBanner";
 
 interface Row {
   profileId: string;
@@ -91,6 +92,8 @@ export default function LeaderboardPage() {
           </p>
         </div>
       )}
+
+      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD || "1234567890"} />
 
       {!rows && <span className="text-mist-muted text-sm animate-pulse">Loading...</span>}
 

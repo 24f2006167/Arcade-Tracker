@@ -52,18 +52,29 @@ export const metadata: Metadata = {
 import NavBar from "@/components/NavBar";
 import VoiceAgent from "@/components/VoiceAgent";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const adClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${pressStart.variable} h-full`}
     >
       <body className="min-h-full antialiased">
+        {adClientId && adClientId !== "ca-pub-1234567890123456" && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClientId}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <ThemeProvider>
           <div className="aurora-field" aria-hidden>
             <div className="aurora-blob a1" />

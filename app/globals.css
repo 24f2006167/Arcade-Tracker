@@ -775,3 +775,33 @@ html.light .logo-glow-animate {
 .animate-wave-flow {
   animation: waveHorizontal 4s linear infinite;
 }
+
+@keyframes dropletBob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes splashRing {
+  0% {
+    r: 3px;
+    opacity: 0.95;
+    stroke-width: 2px;
+  }
+  100% {
+    r: 22px;
+    opacity: 0;
+    stroke-width: 0.5px;
+  }
+}
+
+.animate-droplet-bob {
+  animation: dropletBob 2.4s ease-in-out infinite;
+}
+
+.animate-splash-ring {
+  animation: splashRing 1.8s ease-out infinite;
+}

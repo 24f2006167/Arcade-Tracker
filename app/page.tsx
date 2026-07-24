@@ -11,6 +11,7 @@ import {
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { ARCADE_GAMES } from "@/lib/catalog";
 import type { CatalogBadge } from "@/lib/catalog";
+import AdBanner from "@/components/AdBanner";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -443,6 +444,11 @@ export default function Home() {
             <p className="text-mist-muted text-sm">Loading this month's games…</p>
           </div>
         )}
+      </section>
+
+      {/* ══ SPONSORED ADVERTISEMENT ═══════════════════════════════════════════ */}
+      <section className="max-w-6xl mx-auto px-6 md:px-12 py-2">
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME || "1234567890"} />
       </section>
 
       {/* ══ COMPLETION PROGRESS BAR CONCEPT ════════════════════════════════════ */}
