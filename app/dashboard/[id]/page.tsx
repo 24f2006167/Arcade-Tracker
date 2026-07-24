@@ -12,7 +12,6 @@ import { IncompleteBadges } from "@/components/IncompleteBadges";
 import { HistoryChart } from "@/components/HistoryChart";
 import { MilestoneProgressStepper } from "@/components/MilestoneProgressStepper";
 import { SeasonCountdown } from "@/components/SeasonCountdown";
-import { DailyQuestHub } from "@/components/DailyQuestHub";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
 import { SEASON } from "@/lib/arcade";
 import type { ArcadeResult } from "@/lib/arcadeCalculator";
@@ -842,8 +841,6 @@ export default function DashboardPage() {
         <h2 className="font-display text-sm font-semibold text-mist">Arcade Points history</h2>
         <HistoryChart data={chartData} />
       </section>
-
-      <DailyQuestHub />
 
       <IncompleteBadges completedBadges={badges} />
 
