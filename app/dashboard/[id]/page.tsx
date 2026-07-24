@@ -12,7 +12,6 @@ import { IncompleteBadges } from "@/components/IncompleteBadges";
 import { HistoryChart } from "@/components/HistoryChart";
 import { MilestoneProgressStepper } from "@/components/MilestoneProgressStepper";
 import { SeasonCountdown } from "@/components/SeasonCountdown";
-import { WaterfallTiers } from "@/components/WaterfallTiers";
 import { calculateArcadeResult } from "@/lib/arcadeCalculator";
 import { SEASON } from "@/lib/arcade";
 import type { ArcadeResult } from "@/lib/arcadeCalculator";
@@ -528,9 +527,6 @@ export default function DashboardPage() {
       )}
 
       <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD || "1234567890"} />
-
-      {/* ── Waterfall System Tiers Explainer ──────────────────────────── */}
-      <WaterfallTiers userPoints={points} />
 
       <ScoreboardStrip
         items={[
