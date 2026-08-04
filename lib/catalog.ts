@@ -153,6 +153,17 @@ export const ARCADE_GAMES: CatalogBadge[] = [
     startDate: "2026-07-01T00:00:00Z",
     endDate: "2026-07-31T23:59:59Z",
   },
+  // ── August 2026 games ──
+  {
+    title: "Arcade Simulator: Network Security Engineer",
+    type: "game",
+    url: "https://www.skills.google/games/7397",
+    accessCode: "1q-network-31478",
+    pointValue: 1,
+    pointLabel: "1 Arcade Point per badge",
+    startDate: "2026-08-01T00:00:00Z",
+    endDate: "2026-08-31T23:59:59Z",
+  },
 ];
 
 

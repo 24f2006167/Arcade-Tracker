@@ -202,6 +202,10 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
     "logic log",
     "dialogue design",
     "skill up summer",
+    // All "Arcade Simulator: *" games (e.g. Data Mesh Architect, Network Security Engineer)
+    // must be listed here BEFORE the skill-badge keyword fallback fires, because their
+    // subtitles contain skill-badge words like "network", "security", "engineer".
+    "arcade simulator",
     // Work Life Refresh is the Jan 2026 Work Meets Play badge. arcadecalc counts
     // it as a regular game badge (1 pt) rather than tracking it under Work Meets Play.
     "work life refresh",
