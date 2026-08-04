@@ -209,6 +209,8 @@ export const SEASON_2026_CONFIG: SeasonConfig = {
     // Work Life Refresh is the Jan 2026 Work Meets Play badge. arcadecalc counts
     // it as a regular game badge (1 pt) rather than tracking it under Work Meets Play.
     "work life refresh",
+    // August 2026 special game:
+    "spans and plans",
     // Add new monthly game names here as Google announces them each month.
   ],
 

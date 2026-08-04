@@ -22,6 +22,7 @@ const FETCH_HEADERS = {
 
 // ─── UTM campaign prefix → canonical game title ───────────────────────────────
 const CAMPAIGN_TITLE: Record<string, string> = {
+  // July 2026
   "voyage":   "Arcade Voyage",
   "adv":      "Arcade Adventure",
   "trail":    "Arcade Trail",
@@ -29,11 +30,19 @@ const CAMPAIGN_TITLE: Record<string, string> = {
   "specgame": "Arcade Simulator: Data Mesh Architect",
   "wmpgame":  "Safe Spaces",
   "wmp":      "Safe Spaces",
-  "special":  "Arcade Simulator: Data Mesh Architect",
+  "special":  "Arcade Simulator: Network Security Engineer",
+  // August 2026 — campaign names from go.cloudskillsboost.google/arcade Aug 3 2026
+  "Special-Aug": "Spans and Plans",
+  "specgame-Aug": "Arcade Simulator: Network Security Engineer",
+  "basecamp-Aug": "Arcade Base Camp",
+  "adv-Aug":     "Arcade Adventure",
+  "voyage-Aug":  "Arcade Voyage",
+  "trail-Aug":   "Arcade Trail",
 };
 
 // ─── Image filename fragment → canonical game title ───────────────────────────
 const IMG_TITLE: Record<string, string> = {
+  // July 2026
   "voyuge-july":    "Arcade Voyage",
   "voyage-july":    "Arcade Voyage",
   "adv-july":       "Arcade Adventure",
@@ -42,6 +51,14 @@ const IMG_TITLE: Record<string, string> = {
   "special-july":   "Arcade Simulator: Data Mesh Architect",
   "new-special":    "Safe Spaces",
   "safe":           "Safe Spaces",
+  // August 2026 — image filenames from go.cloudskillsboost.google/arcade Aug 3 2026
+  "special-aug":    "Spans and Plans",
+  "simulater-aug":  "Arcade Simulator: Network Security Engineer",
+  "bc-aug":         "Arcade Base Camp",
+  "adv-aug":        "Arcade Adventure",
+  "voyuge-aug":     "Arcade Voyage",
+  "voyage-aug":     "Arcade Voyage",
+  "trail-aug":      "Arcade Trail",
 };
 
 // Known bad titles to skip (section headings, prize tier labels, etc.)
@@ -194,7 +211,7 @@ function parseArcadePage(rawHtml: string): ScrapedArcadeData {
     if (!rawTitle) {
       const textBlock = stripTags(ctx.slice(-1200)); // last portion has the game name
       const knownPattern = textBlock.match(
-        /(Arcade (?:Voyage|Adventure|Trail|Base Camp|Simulator[^.]{0,50})|Safe Spaces|Logic Log)/i
+        /(Spans and Plans|Arcade (?:Voyage|Adventure|Trail|Base Camp|Simulator[^.]{0,50})|Safe Spaces|Logic Log)/i
       );
       if (knownPattern) rawTitle = knownPattern[1].trim();
     }
