@@ -16,7 +16,7 @@ const SWAG_CATALOG = [
   {
     id: "jacket",
     name: "The Arcade Weather-Shield Jacket",
-    image: "/arcade-jacket-swag-2026.jpg",
+    image: "/arcade-jacket-official.gif",
     revealedOn: "September 15, 2026",
     tiers: ["champion", "legend"],
     link: "https://discuss.google.dev/t/swag-drop-the-arcade-weather-shield-jacket/397353",
