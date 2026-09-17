@@ -19,6 +19,7 @@ import type { Badge, BonusMilestoneInfo } from "@/lib/scraper";
 
 import HackerVaultTransition from "@/components/hero/HackerVaultTransition";
 import AdBanner from "@/components/AdBanner";
+import { SwagDropBanner } from "@/components/SwagDropBanner";
 
 // Facilitator program date boundaries (IST = UTC+5:30)
 // July 13, 2026 17:00 IST = July 13, 2026 11:30 UTC
@@ -836,6 +837,27 @@ export default function DashboardPage() {
         facilitatorStarted={facilitatorStarted}
         facilitatorEnded={facilitatorEnded}
       />
+
+      {/* ── 2026 Swag Drop: Arcade Weather-Shield Jacket ─────────────────── */}
+      <section className="space-y-2">
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-sm font-semibold text-mist">2026 Swag Drop</h2>
+          <span
+            className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,194,75,0.15) 0%, rgba(255,111,179,0.15) 100%)",
+              border: "1px solid rgba(255,194,75,0.35)",
+              color: "#ffc24b",
+            }}
+          >
+            ✦ NEW · Drop #1
+          </span>
+        </div>
+        <SwagDropBanner
+          currentTierName={currentTier?.name ?? null}
+          userPoints={points}
+        />
+      </section>
 
       <section className="space-y-4">
         <h2 className="font-display text-sm font-semibold text-mist">Arcade Points history</h2>
