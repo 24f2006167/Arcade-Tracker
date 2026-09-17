@@ -13,6 +13,7 @@ import { ARCADE_GAMES } from "@/lib/catalog";
 import type { CatalogBadge } from "@/lib/catalog";
 import { SEASON } from "@/lib/arcade";
 import AdBanner from "@/components/AdBanner";
+import { SwagDropBanner } from "@/components/SwagDropBanner";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -509,6 +510,24 @@ export default function Home() {
           <StatPill icon={CheckCircle2} label="Skill badge categories" value={87} color="bg-cyan/15 text-cyan" />
           <StatPill icon={Clock} label="Days until season ends" value={Math.max(0, Math.ceil((new Date(SEASON.facilitatorEnds).getTime() - Date.now()) / 86400000))} color="bg-violet/15 text-violet" />
         </div>
+      </section>
+
+      {/* ── 2026 SWAG DROP ────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 md:px-12 py-10">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="font-display text-xl font-bold text-mist">2026 Swag Drop</h2>
+          <span
+            className="text-[10px] px-2.5 py-1 rounded-full font-bold tracking-widest uppercase"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,194,75,0.15) 0%, rgba(255,111,179,0.15) 100%)",
+              border: "1px solid rgba(255,194,75,0.4)",
+              color: "#ffc24b",
+            }}
+          >
+            ✦ NEW · Drop #1
+          </span>
+        </div>
+        <SwagDropBanner />
       </section>
 
       {/* ══ FEATURES ════════════════════════════════════════════════════════════ */}
