@@ -1,162 +1,111 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Wind,
-  Zap,
-  Shield,
-  Package,
-  Feather,
-  Trophy,
-  Crown,
-  Gift,
-  Star,
-  Shirt,
-  Backpack,
-  Coffee,
-  Watch,
-  BookOpen,
-} from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
-/* ─── Jacket feature highlights ─────────────────────────────────────────── */
-const JACKET_FEATURES = [
-  {
-    icon: "wind",
-    label: "Storm-ready weave",
-    desc: "Repels light rain, shuts down gusting winds.",
-    color: "text-cyan",
-  },
-  {
-    icon: "zap",
-    label: "Official branding",
-    desc: "Google Cloud chest logo + super cloud sleeve patch.",
-    color: "text-amber",
-  },
-  {
-    icon: "shield",
-    label: "Total draft block",
-    desc: "Stand-up collar, Velcro cuffs, ribbed elastic hem.",
-    color: "text-violet",
-  },
-  {
-    icon: "package",
-    label: "Secure cargo pockets",
-    desc: "Deep zippered hand-warmer pockets.",
-    color: "text-pink",
-  },
-  {
-    icon: "feather",
-    label: "Weightless mobility",
-    desc: "Technical performance, no heavy winter bulk.",
-    color: "text-cyan",
-  },
-];
-
-/* ─── Champion swag list (95 pts) ───────────────────────────────────────── */
-const CHAMPION_SWAGS = [
-  {
-    icon: "shirt",
-    name: "Arcade Weather-Shield Jacket",
-    note: "Flagship drop — shared with Legend",
-    highlight: true,
-  },
-  { icon: "backpack", name: "Google Skills Arcade Backpack", note: "Premium carry gear" },
-  { icon: "coffee", name: "Arcade Tumbler / Water Bottle", note: "Branded drinkware" },
-  { icon: "star", name: "Champion Tier Swag Pack", note: "Full core gear collection" },
-];
-
-/* ─── Legend swag list (120 pts) ────────────────────────────────────────── */
-const LEGEND_SWAGS = [
-  {
-    icon: "shirt",
-    name: "Arcade Weather-Shield Jacket",
-    note: "Flagship drop — shared with Champion",
-    highlight: true,
-  },
-  { icon: "backpack", name: "Google Skills Arcade Backpack", note: "Premium carry gear" },
-  { icon: "coffee", name: "Arcade Tumbler / Water Bottle", note: "Branded drinkware" },
-  { icon: "star", name: "Champion Tier Swag Pack", note: "Everything from Champion Tier" },
-  {
-    icon: "crown",
-    name: "Exclusive Legend-only Reward",
-    note: "Reserved for top finishers only",
-    exclusive: true,
-  },
-  {
-    icon: "watch",
-    name: "Premium Arcade Collectible",
-    note: "Legend badge + special edition item",
-    exclusive: true,
-  },
-];
-
-/* ─── Snowball tier data ─────────────────────────────────────────────────── */
+/* ─── Tier definitions ───────────────────────────────────────────────────── */
 const TIERS = [
   {
+    id: "trooper",
     name: "Arcade Trooper",
+    label: "Trooper",
     pts: 50,
     emoji: "🛡️",
-    color: "text-cyan",
-    border: "border-cyan/25",
-    bg: "bg-cyan/8",
-    dot: "bg-cyan",
-    desc: "Foundational milestone — core swag pack with essential Arcade gear.",
+    color: "#22e5e5",
+    glow: "rgba(34,229,229,0.18)",
+    border: "rgba(34,229,229,0.25)",
+    stripeBg: "rgba(34,229,229,0.06)",
+    badge: "rgba(34,229,229,0.15)",
+    spots: 6000,
   },
   {
+    id: "ranger",
     name: "Arcade Ranger",
+    label: "Ranger",
     pts: 75,
     emoji: "🏹",
-    color: "text-violet",
-    border: "border-violet/25",
-    bg: "bg-violet/8",
-    dot: "bg-violet",
-    desc: "Everything from Trooper Tier plus an additional bonus reward.",
+    color: "#b389ff",
+    glow: "rgba(179,137,255,0.18)",
+    border: "rgba(179,137,255,0.25)",
+    stripeBg: "rgba(179,137,255,0.06)",
+    badge: "rgba(179,137,255,0.15)",
+    spots: 4000,
   },
   {
+    id: "champion",
     name: "Arcade Champion",
+    label: "Champion",
     pts: 95,
     emoji: "🏆",
-    color: "text-amber",
-    border: "border-amber/25",
-    bg: "bg-amber/8",
-    dot: "bg-amber",
-    desc: "High-tier premium gear collection + the Weather-Shield Jacket.",
+    color: "#ffc24b",
+    glow: "rgba(255,194,75,0.18)",
+    border: "rgba(255,194,75,0.25)",
+    stripeBg: "rgba(255,194,75,0.06)",
+    badge: "rgba(255,194,75,0.15)",
+    spots: 3000,
   },
   {
+    id: "legend",
     name: "Arcade Legend",
+    label: "Legend",
     pts: 120,
     emoji: "👑",
-    color: "text-pink",
-    border: "border-pink/25",
-    bg: "bg-pink/8",
-    dot: "bg-pink",
-    desc: "All Champion Tier rewards + exclusive Legend-only items.",
+    color: "#ff6fb3",
+    glow: "rgba(255,111,179,0.18)",
+    border: "rgba(255,111,179,0.25)",
+    stripeBg: "rgba(255,111,179,0.06)",
+    badge: "rgba(255,111,179,0.15)",
+    spots: 2500,
   },
 ];
 
-/* ─── Icon helper ────────────────────────────────────────────────────────── */
-function Icon({ name, className }: { name: string; className?: string }) {
-  const cls = `w-4 h-4 ${className ?? ""}`;
-  switch (name) {
-    case "wind":     return <Wind className={cls} />;
-    case "zap":      return <Zap className={cls} />;
-    case "shield":   return <Shield className={cls} />;
-    case "package":  return <Package className={cls} />;
-    case "feather":  return <Feather className={cls} />;
-    case "shirt":    return <Shirt className={cls} />;
-    case "backpack": return <Backpack className={cls} />;
-    case "coffee":   return <Coffee className={cls} />;
-    case "star":     return <Star className={cls} />;
-    case "crown":    return <Crown className={cls} />;
-    case "trophy":   return <Trophy className={cls} />;
-    case "watch":    return <Watch className={cls} />;
-    case "book":     return <BookOpen className={cls} />;
-    default:         return <Gift className={cls} />;
-  }
-}
+/* ─── Swag catalog ───────────────────────────────────────────────────────── */
+const SWAG_CATALOG = [
+  {
+    id: "jacket",
+    name: "Arcade Weather-Shield Jacket",
+    image: "/arcade-jacket-swag-2026.jpg",
+    revealedOn: "15 September 2026",
+    tiers: ["champion", "legend"],
+    drop: "Drop #1",
+    link: "https://discuss.google.dev/t/swag-drop-the-arcade-weather-shield-jacket/397353",
+    isNew: true,
+    desc: "Storm-ready tech jacket with Google Cloud branding. Built for Champions and Legends.",
+  },
+  {
+    id: "trooper-pack",
+    name: "Arcade Trooper Pack",
+    image: null,
+    revealedOn: "TBA",
+    tiers: ["trooper"],
+    drop: "Core Pack",
+    link: null,
+    isNew: false,
+    desc: "Essential Google Skills Arcade gear for reaching the Trooper milestone.",
+  },
+  {
+    id: "ranger-pack",
+    name: "Arcade Ranger Pack",
+    image: null,
+    revealedOn: "TBA",
+    tiers: ["ranger"],
+    drop: "Bonus Pack",
+    link: null,
+    isNew: false,
+    desc: "Trooper Pack rewards + exclusive Ranger bonus reward on top.",
+  },
+  {
+    id: "legend-exclusive",
+    name: "Legend Exclusive Reward",
+    image: null,
+    revealedOn: "TBA",
+    tiers: ["legend"],
+    drop: "Legend Only",
+    link: null,
+    isNew: false,
+    desc: "Reserved exclusively for users who reach the very top of the leaderboard.",
+  },
+];
 
 interface Props {
   currentTierName?: string | null;
@@ -164,431 +113,348 @@ interface Props {
 }
 
 export function SwagDropBanner({ currentTierName, userPoints = 0 }: Props) {
-  const [snowballOpen, setSnowballOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  const isChampion = currentTierName === "Arcade Champion";
-  const isLegend   = currentTierName === "Arcade Legend";
-  const qualifies  = isChampion || isLegend;
+  const tierById = (id: string) => TIERS.find((t) => t.id === id)!;
+
+  const filteredSwags =
+    activeFilter === "all"
+      ? SWAG_CATALOG
+      : SWAG_CATALOG.filter((s) => s.tiers.includes(activeFilter));
+
+  const userTierId = (() => {
+    if (currentTierName === "Arcade Legend") return "legend";
+    if (currentTierName === "Arcade Champion") return "champion";
+    if (currentTierName === "Arcade Ranger") return "ranger";
+    if (currentTierName === "Arcade Trooper") return "trooper";
+    return null;
+  })();
 
   return (
-    <div className="space-y-4 rise-in">
+    <div className="space-y-5">
 
       {/* ══════════════════════════════════════════════════════════════
-          TOP BANNER — image thumbnail + headline
+          SECTION HEADER
       ══════════════════════════════════════════════════════════════ */}
-      <div
-        className="glass-strong rounded-2xl overflow-hidden border border-line relative"
-        id="swag-drop-banner"
-      >
-        {/* Drop pill */}
-        <div className="absolute top-3 left-3 z-10">
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
-            style={{
-              background: "linear-gradient(135deg,#ffc24b 0%,#ff6fb3 100%)",
-              color: "#05060f",
-              boxShadow: "0 2px 10px rgba(255,194,75,0.45)",
-            }}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+            style={{ background: "linear-gradient(135deg,rgba(255,194,75,0.2) 0%,rgba(255,111,179,0.2) 100%)", border: "1px solid rgba(255,194,75,0.3)" }}
           >
-            ✦ 2026 Swag Drop · Drop #1
-          </span>
-        </div>
-
-        {qualifies && (
-          <div className="absolute top-3 right-3 z-10">
-            <span
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
-              style={{
-                background: "rgba(34,229,229,0.15)",
-                border: "1px solid rgba(34,229,229,0.4)",
-                color: "#22e5e5",
-              }}
-            >
-              ✓ You qualify!
-            </span>
+            🎁
           </div>
-        )}
+          <div>
+            <h2 className="font-display text-sm font-bold text-mist uppercase tracking-widest">
+              Season Prizes &amp; Swags
+            </h2>
+            <p className="text-[10px] text-mist-muted mt-0.5">2026 · First-come, first-served waterfall system</p>
+          </div>
+        </div>
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+          style={{
+            background: "linear-gradient(135deg,rgba(255,194,75,0.15),rgba(255,111,179,0.15))",
+            border: "1px solid rgba(255,194,75,0.4)",
+            color: "#ffc24b",
+          }}
+        >
+          ✦ Drop #1 Live
+        </span>
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-0 sm:gap-5 p-5 pt-10 sm:pt-5 sm:items-start">
-          {/* ── Thumbnail image ──────────────────────────────────── */}
-          <div className="sm:pt-1 shrink-0">
+      {/* ══════════════════════════════════════════════════════════════
+          TIER CARDS ROW
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {TIERS.map((tier) => {
+          const unlocked = userPoints >= tier.pts;
+          const isCurrent = userTierId === tier.id;
+
+          return (
             <div
-              className="relative overflow-hidden rounded-xl"
+              key={tier.id}
+              className="relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
               style={{
-                width: "140px",
-                minWidth: "140px",
-                boxShadow: "0 4px 24px rgba(255,194,75,0.25), 0 1px 6px rgba(0,0,0,0.4)",
-                border: "1px solid rgba(255,194,75,0.2)",
+                border: `1px solid ${isCurrent ? tier.color : tier.border}`,
+                boxShadow: isCurrent ? `0 0 20px ${tier.glow}` : "none",
+                background: "rgba(255,255,255,0.03)",
               }}
             >
-              <img
-                src="/arcade-jacket-swag-2026.jpg"
-                alt="Arcade Weather-Shield Jacket"
-                className="w-full object-cover object-center"
-                style={{ display: "block", height: "105px" }}
-              />
-              {/* Vignette */}
+              {/* Diagonal stripe background */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background:
-                    "linear-gradient(135deg,rgba(0,0,0,0.25) 0%,transparent 60%,rgba(0,0,0,0.15) 100%)",
+                  backgroundImage: `repeating-linear-gradient(
+                    -45deg,
+                    ${tier.stripeBg} 0px,
+                    ${tier.stripeBg} 4px,
+                    transparent 4px,
+                    transparent 14px
+                  )`,
                 }}
               />
-            </div>
-          </div>
 
-          {/* ── Text content ─────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 space-y-3">
-            <div>
-              <h2
-                className="font-display text-base font-bold leading-snug"
-                style={{
-                  background: "linear-gradient(90deg,#ffc24b 0%,#ff6fb3 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Arcade Weather-Shield Jacket
-              </h2>
-              <p className="text-mist-muted text-[11px] mt-0.5">
-                For{" "}
-                <span className="text-amber font-semibold">Arcade Champion</span>
-                {" "}&amp;{" "}
-                <span className="text-pink font-semibold">Arcade Legend</span>
-                {" "}tier achievers · 95+ pts
-              </p>
-            </div>
-
-            <p className="text-[11px] text-mist-muted leading-relaxed">
-              You didn&apos;t reach the top by waiting—you built through the storm. Kick off 2026 with
-              the ultimate weather barrier. Throw it on for your commute or wear it to work — it&apos;s
-              a flex you actually earned.
-            </p>
-
-            {/* 5 feature pills */}
-            <div className="flex flex-wrap gap-1.5">
-              {JACKET_FEATURES.map((f) => (
-                <span
-                  key={f.label}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${f.color}`}
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}
-                >
-                  <Icon name={f.icon} className="w-2.5 h-2.5" />
-                  {f.label}
-                </span>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <div className="flex items-center gap-3 pt-1">
-              <a
-                href="https://discuss.google.dev/t/swag-drop-the-arcade-weather-shield-jacket/397353"
-                target="_blank"
-                rel="noopener noreferrer"
-                id="swag-read-drop-link"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 hover:scale-[1.04] active:scale-[0.97]"
-                style={{
-                  background: "linear-gradient(135deg,#ffc24b 0%,#ff6fb3 100%)",
-                  color: "#05060f",
-                  boxShadow: "0 2px 10px rgba(255,194,75,0.3)",
-                }}
-              >
-                Official Announcement <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-              <span className="text-[10px] text-mist-muted">
-                🚀 Every badge gets you closer!
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          CHAMPION SWAG CARD
-      ══════════════════════════════════════════════════════════════ */}
-      <div
-        className="glass-strong rounded-2xl border overflow-hidden"
-        style={{ borderColor: "rgba(255,194,75,0.25)" }}
-        id="swag-champion-card"
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{
-            background: "linear-gradient(90deg,rgba(255,194,75,0.1) 0%,rgba(255,111,179,0.06) 100%)",
-            borderBottom: "1px solid rgba(255,194,75,0.15)",
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🏆</span>
-            <div>
-              <p className="text-[12px] font-bold text-amber">Arcade Champion</p>
-              <p className="text-[10px] text-mist-muted">95 pts · 3,000 spots available</p>
-            </div>
-          </div>
-          <div
-            className="flex flex-col items-end gap-0.5"
-          >
-            <span
-              className="text-[9px] px-2 py-0.5 rounded-full font-semibold text-amber"
-              style={{ background: "rgba(255,194,75,0.12)", border: "1px solid rgba(255,194,75,0.25)" }}
-            >
-              {isChampion ? "✓ Your Tier" : isLegend ? "✓ Included" : "95+ pts"}
-            </span>
-          </div>
-        </div>
-
-        {/* Swag list */}
-        <div className="px-5 py-4 space-y-2.5">
-          <p className="text-[10px] text-mist-muted mb-3">
-            Reaching Champion Tier unlocks a high-tier collection of premium Google Skills Arcade gear:
-          </p>
-          {CHAMPION_SWAGS.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-start gap-3 p-3 rounded-xl"
-              style={{
-                background: item.highlight
-                  ? "linear-gradient(90deg,rgba(255,194,75,0.1) 0%,rgba(255,111,179,0.08) 100%)"
-                  : "rgba(255,255,255,0.03)",
-                border: item.highlight
-                  ? "1px solid rgba(255,194,75,0.25)"
-                  : "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              {/* Thumbnail for jacket item */}
-              {item.highlight ? (
+              {/* Unlocked glow top bar */}
+              {unlocked && (
                 <div
-                  className="relative overflow-hidden rounded-lg shrink-0"
+                  className="absolute top-0 left-0 right-0 h-0.5"
+                  style={{ background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)` }}
+                />
+              )}
+
+              <div className="relative flex items-center gap-3 px-4 py-4">
+                {/* Emoji icon in white card */}
+                <div
+                  className="shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
                   style={{
-                    width: "48px",
-                    height: "36px",
-                    border: "1px solid rgba(255,194,75,0.3)",
+                    background: "rgba(255,255,255,0.08)",
+                    border: `1px solid ${tier.border}`,
+                    boxShadow: `0 2px 12px ${tier.glow}`,
                   }}
                 >
-                  <img
-                    src="/arcade-jacket-swag-2026.jpg"
-                    alt="Jacket"
-                    className="w-full h-full object-cover object-center"
-                  />
+                  {tier.emoji}
                 </div>
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    background: "rgba(255,194,75,0.1)",
-                    border: "1px solid rgba(255,194,75,0.2)",
-                  }}
-                >
-                  <Icon name={item.icon} className="w-4 h-4 text-amber" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className={`text-[11px] font-semibold ${item.highlight ? "text-amber" : "text-mist"}`}>
-                  {item.name}
-                </p>
-                <p className="text-[10px] text-mist-muted mt-0.5">{item.note}</p>
-              </div>
-              {item.highlight && (
-                <span className="shrink-0 text-[9px] text-amber font-bold">⭐ DROP #1</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          LEGEND SWAG CARD
-      ══════════════════════════════════════════════════════════════ */}
-      <div
-        className="glass-strong rounded-2xl border overflow-hidden"
-        style={{ borderColor: "rgba(255,111,179,0.25)" }}
-        id="swag-legend-card"
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{
-            background: "linear-gradient(90deg,rgba(255,111,179,0.1) 0%,rgba(179,137,255,0.08) 100%)",
-            borderBottom: "1px solid rgba(255,111,179,0.15)",
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">👑</span>
-            <div>
-              <p className="text-[12px] font-bold text-pink">Arcade Legend</p>
-              <p className="text-[10px] text-mist-muted">120 pts · 2,500 spots available</p>
-            </div>
-          </div>
-          <div>
-            <span
-              className="text-[9px] px-2 py-0.5 rounded-full font-semibold text-pink"
-              style={{ background: "rgba(255,111,179,0.12)", border: "1px solid rgba(255,111,179,0.25)" }}
-            >
-              {isLegend ? "✓ Your Tier" : "120+ pts"}
-            </span>
-          </div>
-        </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-bold" style={{ color: tier.color }}>
+                    {tier.name}
+                  </p>
 
-        {/* Snowball note */}
-        <div
-          className="mx-5 mt-4 px-3 py-2 rounded-lg text-[10px] text-mist-muted leading-relaxed"
-          style={{ background: "rgba(255,111,179,0.06)", border: "1px solid rgba(255,111,179,0.12)" }}
-        >
-          ❄️{" "}
-          <span className="text-pink font-semibold">Snowball:</span> Legend includes everything from
-          Champion Tier <span className="font-semibold">plus</span> these exclusive Legend-only rewards:
-        </div>
-
-        {/* Swag list */}
-        <div className="px-5 py-4 space-y-2.5">
-          {LEGEND_SWAGS.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-start gap-3 p-3 rounded-xl"
-              style={{
-                background: item.exclusive
-                  ? "linear-gradient(90deg,rgba(255,111,179,0.1) 0%,rgba(179,137,255,0.08) 100%)"
-                  : item.highlight
-                    ? "linear-gradient(90deg,rgba(255,194,75,0.08) 0%,rgba(255,111,179,0.06) 100%)"
-                    : "rgba(255,255,255,0.03)",
-                border: item.exclusive
-                  ? "1px solid rgba(255,111,179,0.25)"
-                  : item.highlight
-                    ? "1px solid rgba(255,194,75,0.2)"
-                    : "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              {/* Thumbnail for jacket */}
-              {item.highlight ? (
-                <div
-                  className="relative overflow-hidden rounded-lg shrink-0"
-                  style={{
-                    width: "48px",
-                    height: "36px",
-                    border: "1px solid rgba(255,194,75,0.3)",
-                  }}
-                >
-                  <img
-                    src="/arcade-jacket-swag-2026.jpg"
-                    alt="Jacket"
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    background: item.exclusive
-                      ? "rgba(255,111,179,0.12)"
-                      : "rgba(255,194,75,0.08)",
-                    border: item.exclusive
-                      ? "1px solid rgba(255,111,179,0.25)"
-                      : "1px solid rgba(255,194,75,0.15)",
-                  }}
-                >
-                  <Icon
-                    name={item.icon}
-                    className={`w-4 h-4 ${item.exclusive ? "text-pink" : "text-amber"}`}
-                  />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`text-[11px] font-semibold ${
-                    item.exclusive ? "text-pink" : item.highlight ? "text-amber" : "text-mist"
-                  }`}
-                >
-                  {item.name}
-                </p>
-                <p className="text-[10px] text-mist-muted mt-0.5">{item.note}</p>
-              </div>
-              {item.exclusive && (
-                <span className="shrink-0 text-[9px] text-pink font-bold">👑 LEGEND</span>
-              )}
-              {item.highlight && !item.exclusive && (
-                <span className="shrink-0 text-[9px] text-amber font-bold">⭐ DROP #1</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          SNOWBALL TIER SYSTEM ACCORDION
-      ══════════════════════════════════════════════════════════════ */}
-      <div
-        className="glass rounded-2xl overflow-hidden"
-        style={{ border: "1px solid rgba(255,255,255,0.07)" }}
-      >
-        <button
-          id="swag-snowball-toggle"
-          onClick={() => setSnowballOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-white/5 transition-colors duration-150"
-          style={{ background: "rgba(255,255,255,0.03)" }}
-        >
-          <span className="text-xs font-semibold text-mist flex items-center gap-2">
-            <span>❄️</span> Snowball Prize Tier System — how rewards stack up
-          </span>
-          {snowballOpen ? (
-            <ChevronUp className="w-4 h-4 text-mist-muted" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-mist-muted" />
-          )}
-        </button>
-
-        {snowballOpen && (
-          <div className="px-5 pb-5 pt-2 space-y-3">
-            <p className="text-[10px] text-mist-muted leading-relaxed">
-              Think of it like a{" "}
-              <span className="text-cyan font-semibold">&ldquo;Snowball&rdquo;</span> — you never
-              have to pick and choose. Ranking up rolls your rewards forward and adds more.{" "}
-              <span className="text-amber font-medium">
-                Note: Trooper &amp; Ranger prizes won&apos;t snowball into Champion &amp; Legend.
-              </span>
-            </p>
-            <div className="space-y-2">
-              {TIERS.map((tier, idx) => {
-                const unlocked = userPoints >= tier.pts;
-                return (
-                  <div
-                    key={tier.name}
-                    className={`flex items-start gap-3 p-3 rounded-xl border transition-opacity ${tier.border} ${unlocked ? "opacity-100" : "opacity-50"}`}
-                    style={{ background: `rgba(255,255,255,0.03)` }}
-                  >
-                    <div className="flex flex-col items-center gap-1 shrink-0 pt-0.5">
-                      <span className="text-base leading-none">{tier.emoji}</span>
-                      {idx < TIERS.length - 1 && (
-                        <div className={`w-0.5 h-4 rounded-full ${tier.dot} opacity-30`} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[11px] font-bold ${tier.color}`}>{tier.name}</span>
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded-full ${tier.color}`}
-                          style={{ background: "rgba(255,255,255,0.07)" }}
-                        >
-                          {tier.pts} pts
-                        </span>
-                        {unlocked && (
-                          <span className="text-[9px] font-semibold" style={{ color: "#4ade80" }}>
-                            ✓ Unlocked
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-mist-muted leading-relaxed mt-0.5">
-                        {tier.desc}
-                      </p>
-                    </div>
+                  {/* PTS badge */}
+                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                      style={{
+                        background: tier.badge,
+                        border: `1px solid ${tier.border}`,
+                        color: tier.color,
+                      }}
+                    >
+                      {tier.pts} pts required
+                    </span>
+                    {unlocked && (
+                      <span className="text-[9px] font-semibold" style={{ color: "#4ade80" }}>
+                        ✓ Unlocked
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+
+                  <p className="text-[9px] text-mist-muted mt-1">
+                    {tier.spots.toLocaleString()} spots
+                  </p>
+                </div>
+
+                {/* Crown for current tier */}
+                {isCurrent && (
+                  <div
+                    className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                    style={{ background: tier.badge, border: `1px solid ${tier.border}` }}
+                  >
+                    ★
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          FILTER TABS
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {[{ id: "all", label: "All Tiers" }, ...TIERS.map((t) => ({ id: t.id, label: t.label }))].map((tab) => {
+          const tier = TIERS.find((t) => t.id === tab.id);
+          const isActive = activeFilter === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveFilter(tab.id)}
+              className="px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200"
+              style={{
+                background: isActive
+                  ? tab.id === "all"
+                    ? "linear-gradient(135deg,#ffc24b,#ff6fb3)"
+                    : tier?.color
+                  : "rgba(255,255,255,0.06)",
+                color: isActive ? (tab.id === "all" ? "#05060f" : "#05060f") : "rgba(255,255,255,0.55)",
+                border: isActive
+                  ? "1px solid transparent"
+                  : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: isActive && tier ? `0 2px 10px ${tier.glow}` : "none",
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          SWAG CARDS GRID
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredSwags.map((item) => {
+          const primaryTier = tierById(item.tiers[0]);
+
+          return (
+            <div
+              key={item.id}
+              className="glass-strong rounded-2xl overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-1"
+              style={{
+                border: `1px solid rgba(255,255,255,0.07)`,
+                boxShadow: item.isNew ? `0 0 24px rgba(255,194,75,0.12)` : "none",
+              }}
+            >
+              {/* Image area */}
+              <div
+                className="relative overflow-hidden"
+                style={{
+                  height: "160px",
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
+                  />
+                ) : (
+                  /* Placeholder for unrevealed swags */
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
+                      style={{
+                        background: primaryTier.badge,
+                        border: `1px solid ${primaryTier.border}`,
+                      }}
+                    >
+                      {primaryTier.emoji}
+                    </div>
+                    <span className="text-[10px] text-mist-muted font-medium">Coming soon</span>
+                  </div>
+                )}
+
+                {/* New badge */}
+                {item.isNew && (
+                  <div
+                    className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest"
+                    style={{
+                      background: "linear-gradient(135deg,#ffc24b,#ff6fb3)",
+                      color: "#05060f",
+                    }}
+                  >
+                    ✦ New
+                  </div>
+                )}
+
+                {/* Drop label top right */}
+                <div
+                  className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-semibold"
+                  style={{
+                    background: "rgba(0,0,0,0.5)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.7)",
+                    backdropFilter: "blur(6px)",
+                  }}
+                >
+                  {item.drop}
+                </div>
+              </div>
+
+              {/* Card body */}
+              <div className="flex flex-col gap-2.5 p-4 flex-1">
+                {/* Reveal date */}
+                <p className="text-[9px] text-mist-muted">
+                  {item.revealedOn === "TBA" ? "🔒 Not yet revealed" : `Revealed on ${item.revealedOn}`}
+                </p>
+
+                {/* Name */}
+                <p className="text-[12px] font-bold text-mist leading-snug">{item.name}</p>
+
+                {/* Description */}
+                <p className="text-[10px] text-mist-muted leading-relaxed flex-1">
+                  {item.desc}
+                </p>
+
+                {/* Tier tags */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {item.tiers.map((tid) => {
+                    const t = tierById(tid);
+                    return (
+                      <span
+                        key={tid}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold"
+                        style={{
+                          background: t.badge,
+                          border: `1px solid ${t.border}`,
+                          color: t.color,
+                        }}
+                      >
+                        {t.emoji} {t.label}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* CTA */}
+                {item.link ? (
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-semibold transition-all duration-150 hover:bg-white/10 group"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                  >
+                    Swag Drop
+                    <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  </a>
+                ) : (
+                  <div
+                    className="mt-1 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-medium"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      color: "rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    <span>To be revealed</span>
+                    <span>🔒</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          SNOWBALL NOTE
+      ══════════════════════════════════════════════════════════════ */}
+      <div
+        className="flex items-start gap-3 px-4 py-3 rounded-xl"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <span className="text-base shrink-0">❄️</span>
+        <p className="text-[10px] text-mist-muted leading-relaxed">
+          <span className="text-cyan font-semibold">Snowball System:</span> You never lose rewards
+          when you rank up — each tier includes everything from the previous tier plus more. 
+          Reaching Legend Tier gives you the complete Champion pack plus exclusive Legend-only rewards.{" "}
+          <span className="text-amber font-medium">
+            Note: Trooper &amp; Ranger prizes don&apos;t snowball into Champion &amp; Legend tiers.
+          </span>
+        </p>
       </div>
     </div>
   );
